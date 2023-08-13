@@ -5,11 +5,9 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.provider.MediaStore;
 import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -27,7 +25,6 @@ import androidx.annotation.NonNull;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -312,7 +309,7 @@ public class MainActivity extends AppCompatActivity {
                             String username = usernameEditText.getText().toString();
                             String password = passwordEditText.getText().toString();
                             String smbUrl = smbUrlEditText.getText().toString();
-                            copyDirectoryToSMB(new java.io.File("/sdcard/DCIM/SYNC"), smbUrl, "BACKUP", username, password);
+                            moveDirectoryToSMB(new java.io.File("/sdcard/DCIM/SYNC"), smbUrl, "BACKUP", username, password);
                         }
                     })
                     .setNegativeButton("Annulla", new DialogInterface.OnClickListener() {
@@ -324,8 +321,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
-    private void copyDirectoryToSMB(File localDir, String smbUrl, String shareName, String username, String password) {
+    private void moveDirectoryToSMB(File localDir, String smbUrl, String shareName, String username, String password) {
         final boolean[] successo = {false};  // Variabile per tenere traccia se la sincronizzazione è andata a buon fine
         executorService.execute(new Runnable() {
             @Override
@@ -353,13 +349,23 @@ public class MainActivity extends AppCompatActivity {
                                             out.write(buffer, 0, len);
                                         }
 
-                                        runOnUiThread(new Runnable() {
-                                            public void run() {
-                                                if(successo[0]==false){
-                                                    Toast.makeText(MainActivity.this, "File SYNC sincronizzati col server!", Toast.LENGTH_SHORT).show();
-                                                    successo[0] =true;}
-                                            }
-                                        });
+                                        // Effettua lo spostamento (taglia) del file locale
+                                        if (localFile.delete()) {
+                                            runOnUiThread(new Runnable() {
+                                                public void run() {
+                                                    if (successo[0] == false) {
+                                                        Toast.makeText(MainActivity.this, "File SYNC sincronizzati col server!", Toast.LENGTH_SHORT).show();
+                                                        successo[0] = true;
+                                                    }
+                                                }
+                                            });
+                                        } else {
+                                            runOnUiThread(new Runnable() {
+                                                public void run() {
+                                                    Toast.makeText(MainActivity.this, "Errore durante lo spostamento del file locale", Toast.LENGTH_SHORT).show();
+                                                }
+                                            });
+                                        }
 
                                     } catch (Exception e) {
                                         // Handle exceptions
@@ -386,4 +392,5 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
 }
