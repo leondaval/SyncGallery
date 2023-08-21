@@ -2,6 +2,8 @@ package app.SyncGallery;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -15,17 +17,21 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 import android.Manifest;
+import android.graphics.BitmapFactory;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationManagerCompat;
+import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.annotation.NonNull;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.EnumSet;
@@ -37,6 +43,7 @@ import com.hierynomus.mssmb2.SMB2CreateDisposition;
 import com.hierynomus.mssmb2.SMB2ShareAccess;
 import com.hierynomus.smbj.SMBClient;
 import com.hierynomus.smbj.auth.AuthenticationContext;
+import com.hierynomus.smbj.common.SMBException;
 import com.hierynomus.smbj.connection.Connection;
 import com.hierynomus.smbj.session.Session;
 import com.hierynomus.smbj.share.DiskShare;
@@ -48,7 +55,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_CODE_MOVE_DIRECTORY = 2;
     private static final int REQUEST_CODE_CHANGE_DIRECTORY = 3;
      */
-
+    private int copyNotificationId = 1; // ID per la notifica del processo di copia
+    private int moveNotificationId = 1; // ID per la notifica del processo di spostamento
     private Uri directoryUri;  // Il valore deve essere mantenuto alla chiusura dell'app in modo che ad ogni riavvio ricorda il path scelto dall'utente per la copia e lo spostamento dei file.
     //private String directoryUriString;  Variabile di appoggio per convertire URI (PATH) in stringa.
     //SharedPreferences prefs = getSharedPreferences("prefs", MODE_PRIVATE); Inizializzazione delle preferenze condivise dell'app
@@ -217,11 +225,21 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private boolean copyDirectory(File srcDir, File dstDir) {
-
         if (!dstDir.exists())
             dstDir.mkdirs();
 
+        // Mostra la notifica all'inizio del processo
+        showNotification("Copia in corso...", 0);
+
         try {
+            int totalFiles = 0;
+            for (File srcFile : srcDir.listFiles()) {
+                if (srcFile.isFile() && (srcFile.getName().endsWith(".jpg") || srcFile.getName().endsWith(".jpeg") || srcFile.getName().endsWith(".mp4") || srcFile.getName().endsWith(".webp") || srcFile.getName().endsWith(".png"))) {
+                    totalFiles++;
+                }
+            }
+
+            int copiedFiles = 0;
             for (File srcFile : srcDir.listFiles()) {
                 if (srcFile.isFile() && (srcFile.getName().endsWith(".jpg") || srcFile.getName().endsWith(".jpeg") || srcFile.getName().endsWith(".mp4") || srcFile.getName().endsWith(".webp") || srcFile.getName().endsWith(".png"))) {
                     File dstFile = new File(dstDir, srcFile.getName());
@@ -234,11 +252,24 @@ public class MainActivity extends AppCompatActivity {
                     }
                     in.close();
                     out.close();
+                    copiedFiles++;
+
+                    // Calcola lo stato del processo e aggiorna la notifica con lo stato
+                    int progress = (copiedFiles * 100) / totalFiles;
+                    showNotification("Copia in corso...", progress);
                 }
             }
+
+            // Cancella la notifica relativa al processo in corso
+            NotificationManagerCompat.from(MainActivity.this).cancel(copyNotificationId);
+
+            showNotification("Copia eseguita con successo!", -1);
             return true;
         } catch (Exception e) {
             e.printStackTrace();
+            // Cancella la notifica relativa al processo in corso
+            NotificationManagerCompat.from(MainActivity.this).cancel(copyNotificationId);
+            showNotification("Copia fallita!", -1);
             return false;
         }
     }
@@ -260,24 +291,72 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private boolean moveDirectory(File srcDir, File dstDir) {
-
         if (!dstDir.exists())
             dstDir.mkdirs();
 
+        // Mostra la notifica all'inizio del processo
+        showNotification("Spostamento in corso...", 0);
 
         try {
+            int totalFiles = 0;
+            for (File srcFile : srcDir.listFiles()) {
+                if (srcFile.isFile() && (srcFile.getName().endsWith(".jpg") || srcFile.getName().endsWith(".jpeg") || srcFile.getName().endsWith(".mp4") || srcFile.getName().endsWith(".webp") || srcFile.getName().endsWith(".png"))) {
+                    totalFiles++;
+                }
+            }
+
+            int movedFiles = 0;
             for (File srcFile : srcDir.listFiles()) {
                 if (srcFile.isFile() && (srcFile.getName().endsWith(".jpg") || srcFile.getName().endsWith(".jpeg") || srcFile.getName().endsWith(".mp4") || srcFile.getName().endsWith(".webp") || srcFile.getName().endsWith(".png"))) {
                     File dstFile = new File(dstDir, srcFile.getName());
                     if (!srcFile.renameTo(dstFile))
                         return false;
 
+                    movedFiles++;
+
+                    // Calcola lo stato del processo e aggiorna la notifica con lo stato
+                    int progress = (movedFiles * 100) / totalFiles;
+                    showNotification("Spostamento in corso...", progress);
+
                 }
             }
+            // Cancella la notifica relativa al processo in corso
+            NotificationManagerCompat.from(MainActivity.this).cancel(moveNotificationId);
+
+            showNotification("Spostamento eseguito con successo!", -1);
+
             return true;
         } catch (Exception e) {
             e.printStackTrace();
+            // Cancella la notifica relativa al processo in corso
+            NotificationManagerCompat.from(MainActivity.this).cancel(moveNotificationId);
+            showNotification("Spostamento fallito!", -1);
             return false;
+        }
+    }
+
+    private void showNotification(String message, int progress) {
+        // Controlla se l'app possiede i permessi per mostrare la notifica
+        if (checkPermission()) {
+            // Crea un canale di notifica Android
+                NotificationChannel channel = new NotificationChannel("copy_channel", "Copy Channel", NotificationManager.IMPORTANCE_DEFAULT);
+                NotificationManager notificationManager = getSystemService(NotificationManager.class);
+                notificationManager.createNotificationChannel(channel);
+
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(MainActivity.this, "copy_channel")
+                    .setSmallIcon(android.R.drawable.ic_dialog_info)
+                    .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher))
+                    .setContentTitle("Processo avviato!")
+                    .setContentText(message)
+                    .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+
+            if (progress >= 0 && progress <= 100) {
+                builder.setProgress(100, progress, false);
+            }
+
+            NotificationManagerCompat.from(MainActivity.this).notify(copyNotificationId, builder.build());
+        } else {
+            Toast.makeText(MainActivity.this, "Errore, permesso non concesso!", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -289,11 +368,11 @@ public class MainActivity extends AppCompatActivity {
         if (!syncDir.exists()) {
             boolean created = syncDir.mkdirs();
             if (!created) {
-                Toast.makeText(MainActivity.this, "Impossibile creare la cartella SYNC", Toast.LENGTH_LONG).show();
+                Toast.makeText(MainActivity.this, "Impossibile creare la cartella SYNC!", Toast.LENGTH_LONG).show();
                 successo=false;
             }
             else
-                Toast.makeText(MainActivity.this, "Cartella SYNC creata con successo", Toast.LENGTH_LONG).show();
+                Toast.makeText(MainActivity.this, "Cartella SYNC creata con successo!", Toast.LENGTH_LONG).show();
 
         }
         if(successo) {
@@ -322,7 +401,23 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void moveDirectoryToSMB(File localDir, String smbUrl, String shareName, String username, String password) {
-        final boolean[] successo = {false};  // Variabile per tenere traccia se la sincronizzazione è andata a buon fine
+        // Controllo dei permessi
+        if (!checkPermission()) {
+            Toast.makeText(MainActivity.this, "Errore, permesso non concesso", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Crea un canale di notifica per lo spostamento
+        NotificationChannel channel = new NotificationChannel("move_channel", "Move Channel", NotificationManager.IMPORTANCE_DEFAULT);
+        NotificationManager notificationManager = getSystemService(NotificationManager.class);
+        notificationManager.createNotificationChannel(channel);
+
+        final int moveNotificationId = 2; // Identificatore della notifica per lo spostamento
+
+        // Mostra la notifica di avvio dello spostamento
+        showNotification("Spostamento in corso...", 0);
+
+        final boolean[] successo = {false}; // Variabile per tenere traccia se la sincronizzazione è andata a buon fine
         executorService.execute(new Runnable() {
             @Override
             public void run() {
@@ -333,64 +428,87 @@ public class MainActivity extends AppCompatActivity {
                         Session session = connection.authenticate(ac);
                         // Connect to the specified share name
                         try (DiskShare share = (DiskShare) session.connectShare(shareName)) {
+                            int totalFiles = 0;
+                            int movedFiles = 0;
+
                             for (File localFile : localDir.listFiles()) {
                                 if (localFile.isFile()) {
-                                    try (FileInputStream in = new FileInputStream(localFile);
-                                         com.hierynomus.smbj.share.File smbFile = share.openFile(localFile.getName(),
-                                                 EnumSet.of(AccessMask.GENERIC_ALL),
-                                                 null,
-                                                 SMB2ShareAccess.ALL,
-                                                 SMB2CreateDisposition.FILE_OVERWRITE_IF,
-                                                 null);
-                                         OutputStream out = smbFile.getOutputStream()) {
+                                    totalFiles++;
+                                }
+                            }
+
+                            for (File localFile : localDir.listFiles()) {
+                                if (localFile.isFile()) {
+                                    try {
+                                        FileInputStream in = new FileInputStream(localFile);
+                                        com.hierynomus.smbj.share.File smbFile = share.openFile(localFile.getName(),
+                                                EnumSet.of(AccessMask.GENERIC_ALL),
+                                                null,
+                                                SMB2ShareAccess.ALL,
+                                                SMB2CreateDisposition.FILE_OVERWRITE_IF,
+                                                null);
+                                        OutputStream out = smbFile.getOutputStream();
+
                                         byte[] buffer = new byte[1024];
                                         int len;
                                         while ((len = in.read(buffer)) > 0) {
                                             out.write(buffer, 0, len);
                                         }
 
+                                        // Chiudi gli stream
+                                        in.close();
+                                        out.close();
+
                                         // Effettua lo spostamento (taglia) del file locale
                                         if (localFile.delete()) {
-                                            runOnUiThread(new Runnable() {
-                                                public void run() {
-                                                    if (successo[0] == false) {
-                                                        Toast.makeText(MainActivity.this, "File SYNC sincronizzati col server!", Toast.LENGTH_SHORT).show();
-                                                        successo[0] = true;
-                                                    }
-                                                }
-                                            });
-                                        } else {
-                                            runOnUiThread(new Runnable() {
-                                                public void run() {
-                                                    Toast.makeText(MainActivity.this, "Errore durante lo spostamento del file locale", Toast.LENGTH_SHORT).show();
-                                                }
-                                            });
-                                        }
+                                            movedFiles++;
 
-                                    } catch (Exception e) {
-                                        // Handle exceptions
-                                        e.printStackTrace();
-                                        runOnUiThread(new Runnable() {
-                                            public void run() {
-                                                Toast.makeText(MainActivity.this, "Errore, controlla la tua connessione e lo stato del server", Toast.LENGTH_SHORT).show();
+                                            // Calcola lo stato del processo e aggiorna la notifica con lo stato
+                                            int progress = (movedFiles * 100) / totalFiles;
+                                            showNotification("Spostamento in corso...", progress);
+
+                                            if (!successo[0] && movedFiles == totalFiles) {
+                                                // Mostra la notifica di spostamento completato
+                                                showNotification("Spostamento completato", 100);
+
+                                                runOnUiThread(new Runnable() {
+                                                    public void run() {
+                                                        Toast.makeText(MainActivity.this, "File spostati con successo!", Toast.LENGTH_SHORT).show();
+                                                    }
+                                                });
+                                                successo[0] = true;
                                             }
-                                        });
+                                        } else {
+                                            showErrorMessage("Errore durante lo spostamento del file locale");
+                                        }
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                        showErrorMessage("Errore di I/O durante il trasferimento del file");
                                         return;
                                     }
                                 }
                             }
                         }
                     }
-                } catch (Exception e) {
+                } catch (IOException e) {
                     e.printStackTrace();
-                    runOnUiThread(new Runnable() {
-                        public void run() {
-                            Toast.makeText(MainActivity.this, "Errore, controlla la tua connessione e lo stato del server!", Toast.LENGTH_SHORT).show();
-                        }
-                    });
+                    showErrorMessage("Errore di connessione al server SMB");
                 }
+            }
+
+            private void showErrorMessage(final String errorMessage) {
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        // Mostra la notifica di errore durante lo spostamento
+                        showNotification("Errore durante lo spostamento", 0);
+
+                        Toast.makeText(MainActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
         });
     }
+
+
 
 }
