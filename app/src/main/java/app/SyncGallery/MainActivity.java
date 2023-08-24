@@ -49,29 +49,23 @@ import com.hierynomus.smbj.share.DiskShare;
 
 public class MainActivity extends AppCompatActivity {
 
-    /* Variabili di appoggio per verificare il tipo di richiesta effettuata dall'utente e gestirla di conseguenza
-    private static final int REQUEST_CODE_COPY_DIRECTORY = 1;
-    private static final int REQUEST_CODE_MOVE_DIRECTORY = 2;
-    private static final int REQUEST_CODE_CHANGE_DIRECTORY = 3;
-     */
-    private int copyNotificationId = 1; // ID per la notifica del processo di copia
-    private int moveNotificationId = 1; // ID per la notifica del processo di spostamento
+    private int NotificationId = 1; // ID per la notifica
     private Uri directoryUri;  // Il valore deve essere mantenuto alla chiusura dell'app in modo che ad ogni riavvio ricorda il path scelto dall'utente per la copia e lo spostamento dei file.
     //private String directoryUriString;  Variabile di appoggio per convertire URI (PATH) in stringa.
     //SharedPreferences prefs = getSharedPreferences("prefs", MODE_PRIVATE); Inizializzazione delle preferenze condivise dell'app
 
-    private static final int PERMISSION_REQUEST_CODE = 1;
+    ExecutorService executorService = Executors.newSingleThreadExecutor();
 
-    private ExecutorService executorService = Executors.newSingleThreadExecutor();
+    private static final int PERMISSION_REQUEST_CODE = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-    //directoryUriString = prefs.getString("directoryUri", null);
-    //    if (directoryUriString != null)  Se != null allora app gia avviata e premuto tasto copia, sposta o cambia directory.
-    //        directoryUri = Uri.parse(directoryUriString);  Se è presente una uri (directory) nelle preferenze, allora la inserisce nella variabile uri.
+        //directoryUriString = prefs.getString("directoryUri", null);
+        //    if (directoryUriString != null)  Se != null allora app gia avviata e premuto tasto copia, sposta o cambia directory.
+        //        directoryUri = Uri.parse(directoryUriString);  Se è presente una uri (directory) nelle preferenze, allora la inserisce nella variabile uri.
 
         Button copyDirectoryButton = findViewById(R.id.copyDirectoryButton);
         copyDirectoryButton.setOnClickListener(new View.OnClickListener() {
@@ -83,8 +77,7 @@ public class MainActivity extends AppCompatActivity {
                             Toast.makeText(MainActivity.this, "Copia eseguita con successo!", Toast.LENGTH_SHORT).show();
                         else
                             Toast.makeText(MainActivity.this, "Errore, copia non riuscita!", Toast.LENGTH_SHORT).show();
-                    }
-                    else
+                    } else
                         openDirectory();
                 } else
                     requestPermission();
@@ -102,8 +95,7 @@ public class MainActivity extends AppCompatActivity {
                             Toast.makeText(MainActivity.this, "Spostamento eseguito con successo!", Toast.LENGTH_SHORT).show();
                         else
                             Toast.makeText(MainActivity.this, "Errore, spostamento non riuscito!", Toast.LENGTH_SHORT).show();
-                    }
-                    else
+                    } else
                         openDirectory();
                 } else
                     requestPermission();
@@ -118,7 +110,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if (checkPermission()) {
                     openDirectory();
-            }   else
+                } else
                     requestPermission();
             }
         });
@@ -130,15 +122,16 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if (checkPermission() && checkPermissionInternet()) {
                     showSmbCredentialsDialog();
-                }   else{
-                        if(!checkPermission())
-                            requestPermission();
-                        else
-                            requestPermissionInternet();}
+                } else {
+                    if (!checkPermission())
+                        requestPermission();
+                    else
+                        requestPermissionInternet();
+                }
 
             }
         });
-}
+    }
 
     private boolean checkPermissionInternet() {
         int networkStatePermission = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_NETWORK_STATE);
@@ -148,7 +141,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void requestPermissionInternet() {
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_NETWORK_STATE, Manifest.permission.INTERNET},PERMISSION_REQUEST_CODE);
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_NETWORK_STATE, Manifest.permission.INTERNET}, PERMISSION_REQUEST_CODE);
     }
 
     @Override
@@ -183,7 +176,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     ActivityResultLauncher<Intent> requestPermissionLauncher =
-            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {});
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            });
 
     private ActivityResultLauncher<Intent> directoryLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -227,8 +221,8 @@ public class MainActivity extends AppCompatActivity {
         if (!dstDir.exists())
             dstDir.mkdirs();
 
-        // Mostra la notifica all'inizio del processo
-        showNotification("Copia in corso...", 0);
+        // Mostra la notifica all'inizio del processo di copia
+        showProgressNotification("Copia in corso...", 0, true);
 
         try {
             int totalFiles = 0;
@@ -255,20 +249,17 @@ public class MainActivity extends AppCompatActivity {
 
                     // Calcola lo stato del processo e aggiorna la notifica con lo stato
                     int progress = (copiedFiles * 100) / totalFiles;
-                    showNotification("Copia in corso...", progress);
+                    showProgressNotification("Copia in corso...", progress, true);
                 }
             }
 
-            // Cancella la notifica relativa al processo in corso
-            NotificationManagerCompat.from(MainActivity.this).cancel(copyNotificationId);
+            // Mostra la notifica di completamento
+            showProgressNotification("Copia eseguita con successo!", -1, false);
 
-            showNotification("Copia eseguita con successo!", -1);
             return true;
         } catch (Exception e) {
             e.printStackTrace();
-            // Cancella la notifica relativa al processo in corso
-            NotificationManagerCompat.from(MainActivity.this).cancel(copyNotificationId);
-            showNotification("Copia fallita!", -1);
+            showProgressNotification("Copia fallita!", -1, false);
             return false;
         }
     }
@@ -293,8 +284,8 @@ public class MainActivity extends AppCompatActivity {
         if (!dstDir.exists())
             dstDir.mkdirs();
 
-        // Mostra la notifica all'inizio del processo
-        showNotification("Spostamento in corso...", 0);
+        // Mostra la notifica all'inizio del processo di spostamento
+        showProgressNotification("Spostamento in corso...", 0, true);
 
         try {
             int totalFiles = 0;
@@ -315,49 +306,47 @@ public class MainActivity extends AppCompatActivity {
 
                     // Calcola lo stato del processo e aggiorna la notifica con lo stato
                     int progress = (movedFiles * 100) / totalFiles;
-                    showNotification("Spostamento in corso...", progress);
-
+                    showProgressNotification("Spostamento in corso...", progress, true);
                 }
             }
-            // Cancella la notifica relativa al processo in corso
-            NotificationManagerCompat.from(MainActivity.this).cancel(moveNotificationId);
 
-            showNotification("Spostamento eseguito con successo!", -1);
+            // Mostra la notifica di completamento
+            showProgressNotification("Spostamento eseguito con successo!", -1, false);
 
             return true;
         } catch (Exception e) {
             e.printStackTrace();
-            // Cancella la notifica relativa al processo in corso
-            NotificationManagerCompat.from(MainActivity.this).cancel(moveNotificationId);
-            showNotification("Spostamento fallito!", -1);
+            showProgressNotification("Spostamento fallito!", -1, false);
             return false;
         }
     }
 
-    private void showNotification(String message, int progress) {
+
+    private void showProgressNotification(String message, int progress, boolean isOngoing) {
         // Controlla se l'app possiede i permessi per mostrare la notifica
         if (checkPermission()) {
             // Crea un canale di notifica Android
-                NotificationChannel channel = new NotificationChannel("copy_channel", "Copy Channel", NotificationManager.IMPORTANCE_DEFAULT);
-                NotificationManager notificationManager = getSystemService(NotificationManager.class);
-                notificationManager.createNotificationChannel(channel);
+            NotificationChannel canale = new NotificationChannel("canale", "Notifiche", NotificationManager.IMPORTANCE_DEFAULT);
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(canale);
 
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(MainActivity.this, "copy_channel")
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(MainActivity.this, "canale")
                     .setSmallIcon(android.R.drawable.ic_dialog_info)
                     .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher))
                     .setContentTitle("Processo avviato!")
                     .setContentText(message)
-                    .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+                    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                    .setOngoing(isOngoing);
 
             if (progress >= 0 && progress <= 100) {
                 builder.setProgress(100, progress, false);
             }
 
-            NotificationManagerCompat.from(MainActivity.this).notify(copyNotificationId, builder.build());
-        } else {
+            NotificationManagerCompat.from(MainActivity.this).notify(NotificationId, builder.build());
+        } else
             Toast.makeText(MainActivity.this, "Errore, permesso non concesso!", Toast.LENGTH_SHORT).show();
-        }
     }
+
 
     private void showSmbCredentialsDialog() {
         String dstDirPath = "/sdcard/DCIM/SYNC";
@@ -368,13 +357,12 @@ public class MainActivity extends AppCompatActivity {
             boolean created = syncDir.mkdirs();
             if (!created) {
                 Toast.makeText(MainActivity.this, "Impossibile creare la cartella SYNC!", Toast.LENGTH_LONG).show();
-                successo=false;
-            }
-            else
+                successo = false;
+            } else
                 Toast.makeText(MainActivity.this, "Cartella SYNC creata con successo!", Toast.LENGTH_LONG).show();
 
         }
-        if(successo) {
+        if (successo) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             LayoutInflater inflater = getLayoutInflater();
             View view = inflater.inflate(R.layout.dialog_smb_credentials, null);
@@ -406,17 +394,18 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        // Crea un canale di notifica per lo spostamento
-        NotificationChannel channel = new NotificationChannel("move_channel", "Move Channel", NotificationManager.IMPORTANCE_DEFAULT);
-        NotificationManager notificationManager = getSystemService(NotificationManager.class);
-        notificationManager.createNotificationChannel(channel);
+        // Verifica se la cartella SYNC è vuota
+        if (localDir.listFiles() == null || localDir.listFiles().length == 0) {
+            showProgressNotification("Directory SYNC vuota!", -1, false);
+            return;
+        }
 
-        final int moveNotificationId = 2; // Identificatore della notifica per lo spostamento
-
-        // Mostra la notifica di avvio dello spostamento
-        showNotification("Spostamento in corso...", 0);
+        // Mostra la notifica all'inizio del processo di copia
+        showProgressNotification("Spostamento in corso...", 0, true);
 
         final boolean[] successo = {false}; // Variabile per tenere traccia se la sincronizzazione è andata a buon fine
+
+        // All'interno del metodo onClick o dove viene chiamato il processo di spostamento
         executorService.execute(new Runnable() {
             @Override
             public void run() {
@@ -464,11 +453,12 @@ public class MainActivity extends AppCompatActivity {
 
                                             // Calcola lo stato del processo e aggiorna la notifica con lo stato
                                             int progress = (movedFiles * 100) / totalFiles;
-                                            showNotification("Spostamento in corso...", progress);
+                                            showProgressNotification("Spostamento in corso...", progress, true);
 
                                             if (!successo[0] && movedFiles == totalFiles) {
                                                 // Mostra la notifica di spostamento completato
-                                                showNotification("Spostamento completato", 100);
+                                                showProgressNotification("Spostamento completato", -1, false);
+
 
                                                 runOnUiThread(new Runnable() {
                                                     public void run() {
@@ -495,11 +485,13 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
+
             private void showErrorMessage(final String errorMessage) {
                 runOnUiThread(new Runnable() {
                     public void run() {
                         // Mostra la notifica di errore durante lo spostamento
-                        showNotification("Errore durante lo spostamento", 0);
+                        showProgressNotification("Errore durante lo spostamento", -1, false);
+
 
                         Toast.makeText(MainActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
                     }
@@ -507,7 +499,4 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
-
-
-
 }
