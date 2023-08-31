@@ -108,9 +108,9 @@ public class MainActivity extends AppCompatActivity {
         changeDirectoryButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (checkPermission()) {
+                if (checkPermission())
                     openDirectory();
-                } else
+                 else
                     requestPermission();
             }
         });
@@ -120,9 +120,9 @@ public class MainActivity extends AppCompatActivity {
         syncDirectoryButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (checkPermission() && checkPermissionInternet()) {
+                if (checkPermission() && checkPermissionInternet())
                     showSmbCredentialsDialog();
-                } else {
+                 else {
                     if (!checkPermission())
                         requestPermission();
                     else
@@ -157,11 +157,11 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
-            if (allPermissionsGranted) {
+            if (allPermissionsGranted)
                 Toast.makeText(MainActivity.this, "Puoi utilizzare la rete!", Toast.LENGTH_SHORT).show();
-            } else {
+             else
                 Toast.makeText(MainActivity.this, "Permesso di utilizzo rete negato!", Toast.LENGTH_SHORT).show();
-            }
+
         }
     }
 
@@ -227,9 +227,8 @@ public class MainActivity extends AppCompatActivity {
         try {
             int totalFiles = 0;
             for (File srcFile : srcDir.listFiles()) {
-                if (srcFile.isFile() && (srcFile.getName().endsWith(".jpg") || srcFile.getName().endsWith(".jpeg") || srcFile.getName().endsWith(".mp4") || srcFile.getName().endsWith(".webp") || srcFile.getName().endsWith(".png"))) {
+                if (srcFile.isFile() && (srcFile.getName().endsWith(".jpg") || srcFile.getName().endsWith(".jpeg") || srcFile.getName().endsWith(".mp4") || srcFile.getName().endsWith(".webp") || srcFile.getName().endsWith(".png")))
                     totalFiles++;
-                }
             }
 
             int copiedFiles = 0;
@@ -338,9 +337,8 @@ public class MainActivity extends AppCompatActivity {
                     .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                     .setOngoing(isOngoing);
 
-            if (progress >= 0 && progress <= 100) {
+            if (progress >= 0 && progress <= 100)
                 builder.setProgress(100, progress, false);
-            }
 
             NotificationManagerCompat.from(MainActivity.this).notify(NotificationId, builder.build());
         } else
@@ -459,7 +457,6 @@ public class MainActivity extends AppCompatActivity {
                                                 // Mostra la notifica di spostamento completato
                                                 showProgressNotification("Spostamento completato", -1, false);
 
-
                                                 runOnUiThread(new Runnable() {
                                                     public void run() {
                                                         Toast.makeText(MainActivity.this, "File spostati con successo!", Toast.LENGTH_SHORT).show();
@@ -485,14 +482,11 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
-
             private void showErrorMessage(final String errorMessage) {
                 runOnUiThread(new Runnable() {
                     public void run() {
                         // Mostra la notifica di errore durante lo spostamento
                         showProgressNotification("Errore durante lo spostamento", -1, false);
-
-
                         Toast.makeText(MainActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
                     }
                 });
