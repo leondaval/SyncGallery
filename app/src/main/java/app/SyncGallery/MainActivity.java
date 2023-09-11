@@ -67,6 +67,8 @@ public class MainActivity extends AppCompatActivity {
         //    if (directoryUriString != null)  Se != null allora app gia avviata e premuto tasto copia, sposta o cambia directory.
         //        directoryUri = Uri.parse(directoryUriString);  Se è presente una uri (directory) nelle preferenze, allora la inserisce nella variabile uri.
 
+        PermessoNotifiche();
+
         Button copyDirectoryButton = findViewById(R.id.copyDirectoryButton);
         copyDirectoryButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -138,6 +140,17 @@ public class MainActivity extends AppCompatActivity {
         int internetPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET);
         return networkStatePermission == PackageManager.PERMISSION_GRANTED &&
                 internetPermission == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void PermessoNotifiche() {
+        NotificationManager notificationManager = getSystemService(NotificationManager.class);
+
+        if (!notificationManager.areNotificationsEnabled()) {
+            Intent intent = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                    .putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName());
+            startActivity(intent);
+        }
+
     }
 
     private void requestPermissionInternet() {
@@ -220,6 +233,8 @@ public class MainActivity extends AppCompatActivity {
     private boolean copyDirectory(File srcDir, File dstDir) {
         if (!dstDir.exists())
             dstDir.mkdirs();
+
+        
 
         // Mostra la notifica all'inizio del processo di copia
         showProgressNotification("Copia in corso...", 0, true);
@@ -322,7 +337,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void showProgressNotification(String message, int progress, boolean isOngoing) {
-        // Controlla se l'app possiede i permessi per mostrare la notifica
+        // Controlla se l'app possiede i permessi necessari
         if (checkPermission()) {
             // Crea un canale di notifica Android
             NotificationChannel canale = new NotificationChannel("canale", "Notifiche", NotificationManager.IMPORTANCE_DEFAULT);
