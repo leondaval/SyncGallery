@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -49,7 +50,8 @@ import com.hierynomus.smbj.share.DiskShare;
 
 public class MainActivity extends AppCompatActivity {
 
-    private int NotificationId = 1; // ID per la notifica
+    private int NotificationId = 1; // ID per la notifica del progesso
+    private int NotificationId2 = 2; // ID per la notifica del completamento
     private Uri directoryUri;  // Il valore deve essere mantenuto alla chiusura dell'app in modo che ad ogni riavvio ricorda il path scelto dall'utente per la copia e lo spostamento dei file.
     //private String directoryUriString;  Variabile di appoggio per convertire URI (PATH) in stringa.
     //SharedPreferences prefs = getSharedPreferences("prefs", MODE_PRIVATE); Inizializzazione delle preferenze condivise dell'app
@@ -237,7 +239,7 @@ public class MainActivity extends AppCompatActivity {
         
 
         // Mostra la notifica all'inizio del processo di copia
-        showProgressNotification("Copia in corso...", 0, true);
+        showProgressNotification("Copia in corso...", 0, true,NotificationId);
 
         try {
             int totalFiles = 0;
@@ -263,17 +265,21 @@ public class MainActivity extends AppCompatActivity {
 
                     // Calcola lo stato del processo e aggiorna la notifica con lo stato
                     int progress = (copiedFiles * 100) / totalFiles;
-                    showProgressNotification("Copia in corso...", progress, true);
+                    showProgressNotification("Copia in corso...", progress, true,NotificationId);
                 }
             }
 
+            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+            notificationManager.cancel(NotificationId);
+
+
             // Mostra la notifica di completamento
-            showProgressNotification("Copia eseguita con successo!", -1, false);
+            showProgressNotification("Copia eseguita con successo!", -1, false,NotificationId2);
 
             return true;
         } catch (Exception e) {
             e.printStackTrace();
-            showProgressNotification("Copia fallita!", -1, false);
+            showProgressNotification("Copia fallita!", -1, false,NotificationId2);
             return false;
         }
     }
@@ -299,7 +305,7 @@ public class MainActivity extends AppCompatActivity {
             dstDir.mkdirs();
 
         // Mostra la notifica all'inizio del processo di spostamento
-        showProgressNotification("Spostamento in corso...", 0, true);
+        showProgressNotification("Spostamento in corso...", 0, true,NotificationId);
 
         try {
             int totalFiles = 0;
@@ -320,23 +326,26 @@ public class MainActivity extends AppCompatActivity {
 
                     // Calcola lo stato del processo e aggiorna la notifica con lo stato
                     int progress = (movedFiles * 100) / totalFiles;
-                    showProgressNotification("Spostamento in corso...", progress, true);
+                    showProgressNotification("Spostamento in corso...", progress, true,NotificationId);
                 }
             }
 
+            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+            notificationManager.cancel(NotificationId);
+
             // Mostra la notifica di completamento
-            showProgressNotification("Spostamento eseguito con successo!", -1, false);
+            showProgressNotification("Spostamento eseguito con successo!", -1, false,NotificationId2);
 
             return true;
         } catch (Exception e) {
             e.printStackTrace();
-            showProgressNotification("Spostamento fallito!", -1, false);
+            showProgressNotification("Spostamento fallito!", -1, false,NotificationId2);
             return false;
         }
     }
 
 
-    private void showProgressNotification(String message, int progress, boolean isOngoing) {
+    private void showProgressNotification(String message, int progress, boolean isOngoing, int notificationId) {
         // Controlla se l'app possiede i permessi necessari
         if (checkPermission()) {
             // Crea un canale di notifica Android
@@ -344,7 +353,7 @@ public class MainActivity extends AppCompatActivity {
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(canale);
 
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(MainActivity.this, "canale")
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "canale")
                     .setSmallIcon(android.R.drawable.ic_dialog_info)
                     .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher))
                     .setContentTitle("Processo avviato!")
@@ -355,10 +364,12 @@ public class MainActivity extends AppCompatActivity {
             if (progress >= 0 && progress <= 100)
                 builder.setProgress(100, progress, false);
 
-            NotificationManagerCompat.from(MainActivity.this).notify(NotificationId, builder.build());
-        } else
-            Toast.makeText(MainActivity.this, "Errore, permesso non concesso!", Toast.LENGTH_SHORT).show();
+            NotificationManagerCompat.from(this).notify(notificationId, builder.build());
+        } else {
+            Toast.makeText(this, "Errore, permesso non concesso!", Toast.LENGTH_SHORT).show();
+        }
     }
+
 
 
     private void showSmbCredentialsDialog() {
@@ -409,12 +420,12 @@ public class MainActivity extends AppCompatActivity {
 
         // Verifica se la cartella SYNC è vuota
         if (localDir.listFiles() == null || localDir.listFiles().length == 0) {
-            showProgressNotification("Directory SYNC vuota!", -1, false);
+            showProgressNotification("Directory SYNC vuota!", -1, false,NotificationId2);
             return;
         }
 
         // Mostra la notifica all'inizio del processo di copia
-        showProgressNotification("Spostamento in corso...", 0, true);
+        showProgressNotification("Spostamento in corso...", 0, true,NotificationId);
 
         final boolean[] successo = {false}; // Variabile per tenere traccia se la sincronizzazione è andata a buon fine
 
@@ -466,14 +477,16 @@ public class MainActivity extends AppCompatActivity {
 
                                             // Calcola lo stato del processo e aggiorna la notifica con lo stato
                                             int progress = (movedFiles * 100) / totalFiles;
-                                            showProgressNotification("Spostamento in corso...", progress, true);
+                                            showProgressNotification("Spostamento in corso...", progress, true,NotificationId);
 
                                             if (!successo[0] && movedFiles == totalFiles) {
-                                                // Mostra la notifica di spostamento completato
-                                                showProgressNotification("Spostamento completato", -1, false);
-
                                                 runOnUiThread(new Runnable() {
                                                     public void run() {
+                                                        Context context = MainActivity.this; // Ottieni il contesto dell'attività
+                                                        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
+                                                        notificationManager.cancel(NotificationId);
+                                                        // Mostra la notifica di spostamento completato
+                                                        showProgressNotification("Spostamento completato", -1, false,NotificationId2);
                                                         Toast.makeText(MainActivity.this, "File spostati con successo!", Toast.LENGTH_SHORT).show();
                                                     }
                                                 });
@@ -501,7 +514,7 @@ public class MainActivity extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     public void run() {
                         // Mostra la notifica di errore durante lo spostamento
-                        showProgressNotification("Errore durante lo spostamento", -1, false);
+                        showProgressNotification("Errore durante lo spostamento", -1, false,NotificationId2);
                         Toast.makeText(MainActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
                     }
                 });
