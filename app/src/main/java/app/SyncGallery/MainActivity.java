@@ -52,9 +52,7 @@ public class MainActivity extends AppCompatActivity {
 
     private int NotificationId = 1; // ID per la notifica del progesso
     private int NotificationId2 = 2; // ID per la notifica del completamento
-    private Uri directoryUri;  // Il valore deve essere mantenuto alla chiusura dell'app in modo che ad ogni riavvio ricorda il path scelto dall'utente per la copia e lo spostamento dei file.
-    //private String directoryUriString;  Variabile di appoggio per convertire URI (PATH) in stringa.
-    //SharedPreferences prefs = getSharedPreferences("prefs", MODE_PRIVATE); Inizializzazione delle preferenze condivise dell'app
+    private Uri directoryUri;
 
     ExecutorService executorService = Executors.newSingleThreadExecutor();
 
@@ -64,10 +62,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        //directoryUriString = prefs.getString("directoryUri", null);
-        //    if (directoryUriString != null)  Se != null allora app gia avviata e premuto tasto copia, sposta o cambia directory.
-        //        directoryUri = Uri.parse(directoryUriString);  Se è presente una uri (directory) nelle preferenze, allora la inserisce nella variabile uri.
 
         PermessoNotifiche();
 
