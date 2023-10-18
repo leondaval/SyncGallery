@@ -71,10 +71,15 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if (checkPermission()) {
                     if (directoryUri != null) {
-                        if (Copy())
-                            Toast.makeText(MainActivity.this, "Copia eseguita con successo!", Toast.LENGTH_SHORT).show();
-                        else
-                            Toast.makeText(MainActivity.this, "Errore, copia non riuscita!", Toast.LENGTH_SHORT).show();
+                        executeInBackground(() -> {
+                            boolean success = Copy();
+                            runOnUiThread(() -> {
+                            if (success)
+                                Toast.makeText(MainActivity.this, "Copia eseguita con successo!", Toast.LENGTH_SHORT).show();
+                            else
+                                Toast.makeText(MainActivity.this, "Errore, copia non riuscita!", Toast.LENGTH_SHORT).show();
+                            });
+                        });
                     } else
                         openDirectory();
                 } else
@@ -89,10 +94,15 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if (checkPermission()) {
                     if (directoryUri != null) {
-                        if (Move())
-                            Toast.makeText(MainActivity.this, "Spostamento eseguito con successo!", Toast.LENGTH_SHORT).show();
-                        else
-                            Toast.makeText(MainActivity.this, "Errore, spostamento non riuscito!", Toast.LENGTH_SHORT).show();
+                        executeInBackground(() -> {
+                            boolean success = Move();
+                            runOnUiThread(() -> {
+                            if (success)
+                                Toast.makeText(MainActivity.this, "Spostamento eseguito con successo!", Toast.LENGTH_SHORT).show();
+                            else
+                                Toast.makeText(MainActivity.this, "Errore, spostamento non riuscito!", Toast.LENGTH_SHORT).show();
+                            });
+                        });
                     } else
                         openDirectory();
                 } else
@@ -129,6 +139,10 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+    }
+
+    private void executeInBackground(Runnable task) {
+        executorService.execute(task);
     }
 
     private boolean checkPermissionInternet() {
@@ -213,14 +227,15 @@ public class MainActivity extends AppCompatActivity {
     private boolean Copy() {
         boolean success = true;
         String srcdirtemp = directoryUri.getPath();
-        String srcdir;
+        final String srcdirr;
+        String srcdir ="";
         int colonIndex = srcdirtemp.indexOf(':');
 
-        srcdir = srcdirtemp.substring(colonIndex + 1);
+        srcdirr = srcdirtemp.substring(colonIndex + 1);
 
-        Toast.makeText(MainActivity.this, srcdir, Toast.LENGTH_SHORT).show();
+        runOnUiThread(() -> {Toast.makeText(MainActivity.this, srcdirr, Toast.LENGTH_SHORT).show();});
 
-        srcdir = "/sdcard/" + srcdir;
+        srcdir = "/sdcard/" + srcdirr;
 
         success &= copyDirectory(new File(srcdir), new File("/sdcard/DCIM/SYNC"));
         return success;
@@ -281,14 +296,15 @@ public class MainActivity extends AppCompatActivity {
     private boolean Move() {
         boolean success = true;
         String srcdirtemp = directoryUri.getPath();
-        String srcdir;
+        final String srcdirr;
+        String srcdir ="";
         int colonIndex = srcdirtemp.indexOf(':');
 
-        srcdir = srcdirtemp.substring(colonIndex + 1);
+        srcdirr = srcdirtemp.substring(colonIndex + 1);
 
-        Toast.makeText(MainActivity.this, srcdir, Toast.LENGTH_SHORT).show();
+        runOnUiThread(() -> {Toast.makeText(MainActivity.this, srcdirr, Toast.LENGTH_SHORT).show();});
 
-        srcdir = "/sdcard/" + srcdir;
+        srcdir = "/sdcard/" + srcdirr;
 
         success &= moveDirectory(new File(srcdir), new File("/sdcard/DCIM/SYNC"));
         return success;
