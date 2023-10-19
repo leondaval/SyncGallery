@@ -52,6 +52,8 @@ public class MainActivity extends AppCompatActivity {
 
     private int NotificationId = 1; // ID per la notifica del progesso
     private int NotificationId2 = 2; // ID per la notifica del completamento
+    private int NotificationId3 = 3; // ID per la notifica del numero di file
+    private int Files = 0; //Contatore numero foto/video
     private Uri directoryUri;
 
     ExecutorService executorService = Executors.newSingleThreadExecutor();
@@ -74,8 +76,10 @@ public class MainActivity extends AppCompatActivity {
                         executeInBackground(() -> {
                             boolean success = Copy();
                             runOnUiThread(() -> {
-                            if (success)
+                            if (success){
                                 Toast.makeText(MainActivity.this, "Copia eseguita con successo!", Toast.LENGTH_SHORT).show();
+                                showProgressNotification("File totali copiati: "+Files, -1, false,NotificationId3);}
+
                             else
                                 Toast.makeText(MainActivity.this, "Errore, copia non riuscita!", Toast.LENGTH_SHORT).show();
                             });
@@ -97,8 +101,10 @@ public class MainActivity extends AppCompatActivity {
                         executeInBackground(() -> {
                             boolean success = Move();
                             runOnUiThread(() -> {
-                            if (success)
+                            if (success){
                                 Toast.makeText(MainActivity.this, "Spostamento eseguito con successo!", Toast.LENGTH_SHORT).show();
+                                showProgressNotification("File totali copiati: "+Files, -1, false,NotificationId3);}
+
                             else
                                 Toast.makeText(MainActivity.this, "Errore, spostamento non riuscito!", Toast.LENGTH_SHORT).show();
                             });
@@ -257,6 +263,8 @@ public class MainActivity extends AppCompatActivity {
                     totalFiles++;
             }
 
+            Files=totalFiles+Files;
+
             int copiedFiles = 0;
             for (File srcFile : srcDir.listFiles()) {
                 if (srcFile.isFile() && (srcFile.getName().endsWith(".jpg") || srcFile.getName().endsWith(".jpeg") || srcFile.getName().endsWith(".mp4") || srcFile.getName().endsWith(".webp") || srcFile.getName().endsWith(".png"))) {
@@ -324,6 +332,8 @@ public class MainActivity extends AppCompatActivity {
                     totalFiles++;
                 }
             }
+
+            Files=totalFiles+Files;
 
             int movedFiles = 0;
             for (File srcFile : srcDir.listFiles()) {
