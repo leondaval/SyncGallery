@@ -88,11 +88,11 @@ public class MainActivity extends AppCompatActivity {
                                 progressDialog.dismiss(); // Chiudi l'AlertDialog
 
                                 if (success){
-                                Toast.makeText(MainActivity.this, "Copia eseguita con successo!", Toast.LENGTH_SHORT).show();
-                                showProgressNotification("File totali copiati: "+Files, -1, false,NotificationId3);}
+                                    Toast.makeText(MainActivity.this, "Copia eseguita con successo!", Toast.LENGTH_SHORT).show();
+                                    showProgressNotification("File totali copiati: "+Files, -1, false,NotificationId3);}
 
                                 else
-                                Toast.makeText(MainActivity.this, "Errore, copia non riuscita!", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(MainActivity.this, "Errore, copia non riuscita!", Toast.LENGTH_SHORT).show();
 
                             });
                         });
@@ -125,12 +125,11 @@ public class MainActivity extends AppCompatActivity {
                                 progressDialog.dismiss(); // Chiudi l'AlertDialog
 
                                 if (success){
-                                Toast.makeText(MainActivity.this, "Spostamento eseguito con successo!", Toast.LENGTH_SHORT).show();
-                                showProgressNotification("File totali copiati: "+Files, -1, false,NotificationId3);}
+                                    Toast.makeText(MainActivity.this, "Spostamento eseguito con successo!", Toast.LENGTH_SHORT).show();
+                                    showProgressNotification("File totali copiati: "+Files, -1, false,NotificationId3);}
 
                                 else
-                                Toast.makeText(MainActivity.this, "Errore, spostamento non riuscito!", Toast.LENGTH_SHORT).show();
-                                
+                                    Toast.makeText(MainActivity.this, "Errore, spostamento non riuscito!", Toast.LENGTH_SHORT).show();
                             });
                         });
                     } else
