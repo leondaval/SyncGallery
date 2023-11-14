@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
     private int NotificationId3 = 3; // ID per la notifica del numero di file
     private int Files = 0; //Contatore numero foto/video
     private Uri directoryUri;
-
+    private AlertDialog progressDialog;
     ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     private static final int PERMISSION_REQUEST_CODE = 1;
@@ -73,10 +73,21 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if (checkPermission()) {
                     if (directoryUri != null) {
+
+                        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                        builder.setView(R.layout.progress_dialog_layout); // Creare un layout personalizzato con una ProgressBar
+                        builder.setCancelable(false); // Imposta su true se vuoi che l'utente possa annullare l'operazione
+
+                        progressDialog = builder.create();
+                        progressDialog.show();
+
                         executeInBackground(() -> {
                             boolean success = Copy();
                             runOnUiThread(() -> {
-                            if (success){
+
+                                progressDialog.dismiss(); // Chiudi l'AlertDialog
+
+                                if (success){
                                 Toast.makeText(MainActivity.this, "Copia eseguita con successo!", Toast.LENGTH_SHORT).show();
                                 showProgressNotification("File totali copiati: "+Files, -1, false,NotificationId3);}
 
@@ -98,10 +109,21 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if (checkPermission()) {
                     if (directoryUri != null) {
+
+                        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                        builder.setView(R.layout.progress_dialog_layout); // Creare un layout personalizzato con una ProgressBar
+                        builder.setCancelable(false); // Imposta su true se vuoi che l'utente possa annullare l'operazione
+
+                        progressDialog = builder.create();
+                        progressDialog.show();
+
                         executeInBackground(() -> {
                             boolean success = Move();
                             runOnUiThread(() -> {
-                            if (success){
+
+                                progressDialog.dismiss(); // Chiudi l'AlertDialog
+
+                                if (success){
                                 Toast.makeText(MainActivity.this, "Spostamento eseguito con successo!", Toast.LENGTH_SHORT).show();
                                 showProgressNotification("File totali copiati: "+Files, -1, false,NotificationId3);}
 
@@ -251,7 +273,7 @@ public class MainActivity extends AppCompatActivity {
         if (!dstDir.exists())
             dstDir.mkdirs();
 
-        
+        Files=0;
 
         // Mostra la notifica all'inizio del processo di copia
         showProgressNotification("Copia in corso...", 0, true,NotificationId);
@@ -321,6 +343,8 @@ public class MainActivity extends AppCompatActivity {
     private boolean moveDirectory(File srcDir, File dstDir) {
         if (!dstDir.exists())
             dstDir.mkdirs();
+
+        Files=0;
 
         // Mostra la notifica all'inizio del processo di spostamento
         showProgressNotification("Spostamento in corso...", 0, true,NotificationId);
