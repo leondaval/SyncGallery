@@ -469,9 +469,6 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        // Mostra la notifica all'inizio del processo di copia
-        showProgressNotification("Spostamento in corso...", 0, true,NotificationId);
-
         final boolean[] successo = {false}; // Variabile per tenere traccia se la sincronizzazione è andata a buon fine
 
         // All'interno del metodo onClick o dove viene chiamato il processo di spostamento
@@ -485,6 +482,15 @@ public class MainActivity extends AppCompatActivity {
                         Session session = connection.authenticate(ac);
                         // Connect to the specified share name
                         try (DiskShare share = (DiskShare) session.connectShare(shareName)) {
+
+                            // Verifica se la cartella SYNC è vuota
+                            if (localDir.listFiles() == null || localDir.listFiles().length == 0) {
+                                showProgressNotification("Directory SYNC vuota!", -1, false, NotificationId2);
+                                return;
+                            }
+
+                            showProgressNotification("Spostamento in corso...", 0, true, NotificationId);
+
                             int totalFiles = 0;
                             int movedFiles = 0;
 
