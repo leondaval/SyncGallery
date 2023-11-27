@@ -4,16 +4,13 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.provider.MediaStore;
 import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -63,8 +60,6 @@ public class MainActivity extends AppCompatActivity {
     private AlertDialog progressDialog;
     ExecutorService executorService = Executors.newSingleThreadExecutor();
     private static final String[] SUPPORTED_EXTENSIONS = {".jpg", ".jpeg", ".mp4", ".webp", ".png"};
-
-
     private static final int PERMISSION_REQUEST_CODE = 1;
 
     @Override
@@ -178,7 +173,6 @@ public class MainActivity extends AppCompatActivity {
 
         Button scanButton = findViewById(R.id.scanButton);
         scanButton.setOnClickListener(new View.OnClickListener() {
-
             @Override
             public void onClick(View v) {
                 if (checkPermission()) {
@@ -210,6 +204,8 @@ public class MainActivity extends AppCompatActivity {
 
                                         Toast.makeText(MainActivity.this, "URI: "+srcdirr, Toast.LENGTH_SHORT).show();}
                                     }
+                                    else
+                                        Toast.makeText(MainActivity.this, "Non sono presenti foto o video sullo smartphone!", Toast.LENGTH_SHORT).show();
 
                             });
                         });
