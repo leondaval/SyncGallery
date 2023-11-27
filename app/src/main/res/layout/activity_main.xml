@@ -32,6 +32,20 @@
         android:id="@+id/changeDirectoryButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Cambia directory sorgente"/>
+        android:text="Cambia directory sorgente"
+        android:layout_marginBottom="20dp"/>
+
+    <Button
+        android:id="@+id/scanButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Scansione delle directory"
+        android:layout_marginBottom="20dp"/>
+
+    <Button
+        android:id="@+id/elaboraScansioneButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Elabora il risultato della scansione delle directory"/>
 
 </LinearLayout>

@@ -4,13 +4,16 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -36,6 +39,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.EnumSet;
+import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -55,8 +59,11 @@ public class MainActivity extends AppCompatActivity {
     private int NotificationId3 = 3; // ID per la notifica del numero di file
     private int Files = 0; //Contatore numero foto/video
     private Uri directoryUri;
+    private ArrayList<Uri> directoryUriList;
     private AlertDialog progressDialog;
     ExecutorService executorService = Executors.newSingleThreadExecutor();
+    private static final String[] SUPPORTED_EXTENSIONS = {".jpg", ".jpeg", ".mp4", ".webp", ".png"};
+
 
     private static final int PERMISSION_REQUEST_CODE = 1;
 
@@ -168,6 +175,159 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+
+        Button scanButton = findViewById(R.id.scanButton);
+        scanButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                if (checkPermission()) {
+
+                        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                        builder.setView(R.layout.progress_dialog_layout); // Creare un layout personalizzato con una ProgressBar
+                        builder.setCancelable(false); // Imposta su true se vuoi che l'utente possa annullare l'operazione
+
+                        progressDialog = builder.create();
+                        progressDialog.show();
+
+                        executeInBackground(() -> {
+
+                            performScan();
+
+                            runOnUiThread(() -> {
+
+                                progressDialog.dismiss(); // Chiudi l'AlertDialog
+
+                                    if(!directoryUriList.isEmpty()) {
+                                        Toast.makeText(MainActivity.this, "Scansione delle directory eseguita con successo!", Toast.LENGTH_SHORT).show();
+
+                                        for (Uri uri : directoryUriList) {
+
+                                            String srcdirtemp = uri.getPath();
+                                            String srcdirr;
+                                            int colonIndex = srcdirtemp.indexOf(':');
+                                            srcdirr = srcdirtemp.substring(colonIndex + 1);
+
+                                        Toast.makeText(MainActivity.this, "URI: "+srcdirr, Toast.LENGTH_SHORT).show();}
+                                    }
+
+                            });
+                        });
+
+                } else
+                    requestPermission();
+
+            }
+        });
+
+        Button elaboraScansioneButton = findViewById(R.id.elaboraScansioneButton);
+        elaboraScansioneButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                if (checkPermission()) {
+
+                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                    builder.setView(R.layout.progress_dialog_layout); // Creare un layout personalizzato con una ProgressBar
+                    builder.setCancelable(false); // Imposta su true se vuoi che l'utente possa annullare l'operazione
+
+                    progressDialog = builder.create();
+                    progressDialog.show();
+
+                    executeInBackground(() -> {
+
+                        if(!directoryUriList.isEmpty())
+
+                            elaboraScansione();
+
+                        else
+
+                            Toast.makeText(MainActivity.this, "Esegui prima una scansione delle directory!", Toast.LENGTH_SHORT).show();
+
+                        runOnUiThread(() -> {
+
+                            progressDialog.dismiss(); // Chiudi l'AlertDialog
+
+                            Toast.makeText(MainActivity.this, "Elaborazione completata!", Toast.LENGTH_SHORT).show();
+
+                        });
+                    });
+
+                } else
+                    requestPermission();
+
+            }
+        });
+
+    }
+
+    private void performScan() {
+        // Esegui la scansione e salva le directory in un vettore di Uri
+        directoryUriList = scanDirectories();
+    }
+
+    private void elaboraScansione() {
+
+        // Elabora con i risultati della scansione delle directory
+        for (Uri uri : directoryUriList) {
+
+            String srcdirtemp = uri.getPath();
+            final String srcdirr;
+            String srcdir ="";
+            int colonIndex = srcdirtemp.indexOf(':');
+
+            srcdirr = srcdirtemp.substring(colonIndex + 1);
+
+            runOnUiThread(() -> {Toast.makeText(MainActivity.this, srcdirr, Toast.LENGTH_SHORT).show();});
+
+            srcdir = "/sdcard/" + srcdirr;
+
+            copyDirectoryTotale(new File(srcdir), new File("/sdcard/DCIM/SYNC"));
+        }
+
+        }
+
+    public ArrayList<Uri> scanDirectories() {
+
+        // Get the root directory of external storage
+        File externalStorageDir = Environment.getExternalStorageDirectory();
+
+        // Scan the root directory for files with supported extensions
+        scanDirectoryForExtensions(externalStorageDir, directoryUriList);
+
+        return directoryUriList;
+    }
+
+    private void scanDirectoryForExtensions(File directory, ArrayList<Uri> directoryUriList) {
+        File[] files = directory.listFiles();
+
+        if (files != null) {
+            for (File file : files) {
+                if (file.isDirectory()) {
+                    // Recursively scan subdirectories
+                    scanDirectoryForExtensions(file, directoryUriList);
+                } else {
+                    // Check if the file has a supported extension
+                    if (hasSupportedExtension(file.getAbsolutePath())) {
+                        // Create the directory Uri from the parent path
+                        Uri directoryUri = Uri.fromFile(file.getParentFile());
+
+                        if (!directoryUriList.contains(directoryUri)) {
+                            directoryUriList.add(directoryUri);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean hasSupportedExtension(String filePath) {
+        for (String extension : SUPPORTED_EXTENSIONS) {
+            if (filePath.toLowerCase().endsWith(extension)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void executeInBackground(Runnable task) {
@@ -273,6 +433,58 @@ public class MainActivity extends AppCompatActivity {
     private boolean copyDirectory(File srcDir, File dstDir) {
         if (!dstDir.exists())
             dstDir.mkdirs();
+
+        Files=0;
+
+        // Mostra la notifica all'inizio del processo di copia
+        showProgressNotification("Copia in corso...", 0, true,NotificationId);
+
+        try {
+            int totalFiles = 0;
+            for (File srcFile : srcDir.listFiles()) {
+                if (srcFile.isFile() && (srcFile.getName().endsWith(".jpg") || srcFile.getName().endsWith(".jpeg") || srcFile.getName().endsWith(".mp4") || srcFile.getName().endsWith(".webp") || srcFile.getName().endsWith(".png")))
+                    totalFiles++;
+            }
+
+            Files=totalFiles+Files;
+
+            int copiedFiles = 0;
+            for (File srcFile : srcDir.listFiles()) {
+                if (srcFile.isFile() && (srcFile.getName().endsWith(".jpg") || srcFile.getName().endsWith(".jpeg") || srcFile.getName().endsWith(".mp4") || srcFile.getName().endsWith(".webp") || srcFile.getName().endsWith(".png"))) {
+                    File dstFile = new File(dstDir, srcFile.getName());
+                    InputStream in = new FileInputStream(srcFile);
+                    OutputStream out = new FileOutputStream(dstFile);
+                    byte[] buf = new byte[1024];
+                    int len;
+                    while ((len = in.read(buf)) > 0) {
+                        out.write(buf, 0, len);
+                    }
+                    in.close();
+                    out.close();
+                    copiedFiles++;
+
+                    // Calcola lo stato del processo e aggiorna la notifica con lo stato
+                    int progress = (copiedFiles * 100) / totalFiles;
+                    showProgressNotification("Copia in corso...", progress, true,NotificationId);
+                }
+            }
+
+            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+            notificationManager.cancel(NotificationId);
+
+
+            // Mostra la notifica di completamento
+            showProgressNotification("Copia eseguita con successo!", -1, false,NotificationId2);
+
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            showProgressNotification("Copia fallita!", -1, false,NotificationId2);
+            return false;
+        }
+    }
+
+    private boolean copyDirectoryTotale(File srcDir, File dstDir) {
 
         Files=0;
 
