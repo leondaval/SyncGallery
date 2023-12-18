@@ -59,7 +59,6 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<Uri> directoryUriList;
     private AlertDialog progressDialog;
     ExecutorService executorService = Executors.newSingleThreadExecutor();
-    private static final String[] SUPPORTED_EXTENSIONS = {".jpg", ".jpeg", ".mp4", ".webp", ".png"};
     private static final int PERMISSION_REQUEST_CODE = 1;
 
     @Override
@@ -171,8 +170,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        Button scanButton = findViewById(R.id.scanButton);
-        scanButton.setOnClickListener(new View.OnClickListener() {
+        Button copyDirectoryPersonalButton = findViewById(R.id.copyDirectoryPersonalButton);
+        copyDirectoryPersonalButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (checkPermission()) {
@@ -186,27 +185,15 @@ public class MainActivity extends AppCompatActivity {
 
                         executeInBackground(() -> {
 
-                            performScan();
+                            boolean success = copyPhotos();
 
                             runOnUiThread(() -> {
 
-                                progressDialog.dismiss(); // Chiudi l'AlertDialog
-
-                                    if(!directoryUriList.isEmpty()) {
-                                        Toast.makeText(MainActivity.this, "Scansione delle directory eseguita con successo!", Toast.LENGTH_SHORT).show();
-
-                                        for (Uri uri : directoryUriList) {
-
-                                            String srcdirtemp = uri.getPath();
-                                            String srcdirr;
-                                            int colonIndex = srcdirtemp.indexOf(':');
-                                            srcdirr = srcdirtemp.substring(colonIndex + 1);
-
-                                        Toast.makeText(MainActivity.this, "URI: "+srcdirr, Toast.LENGTH_SHORT).show();}
-                                    }
-                                    else
-                                        Toast.makeText(MainActivity.this, "Non sono presenti foto o video sullo smartphone!", Toast.LENGTH_SHORT).show();
-
+                                if (success){
+                                    Toast.makeText(MainActivity.this, "Copia eseguita con successo!", Toast.LENGTH_SHORT).show();
+                                    showProgressNotification("File totali copiati: "+Files, -1, false,NotificationId3);}
+                                else
+                                    Toast.makeText(MainActivity.this, "Errore, copia non riuscita!", Toast.LENGTH_SHORT).show();
                             });
                         });
 
@@ -216,8 +203,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        Button elaboraScansioneButton = findViewById(R.id.elaboraScansioneButton);
-        elaboraScansioneButton.setOnClickListener(new View.OnClickListener() {
+        Button moveDirectoryPersonalButton = findViewById(R.id.moveDirectoryPersonalButton);
+        moveDirectoryPersonalButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
@@ -232,20 +219,14 @@ public class MainActivity extends AppCompatActivity {
 
                     executeInBackground(() -> {
 
-                        if(!directoryUriList.isEmpty())
-
-                            elaboraScansione();
-
-                        else
-
-                            Toast.makeText(MainActivity.this, "Esegui prima una scansione delle directory!", Toast.LENGTH_SHORT).show();
-
+                        boolean success = movePhotos();
                         runOnUiThread(() -> {
+                            if (success){
+                                Toast.makeText(MainActivity.this, "Spostamento eseguito con successo!", Toast.LENGTH_SHORT).show();
+                                showProgressNotification("File totali spostati: "+Files, -1, false,NotificationId3);}
 
-                            progressDialog.dismiss(); // Chiudi l'AlertDialog
-
-                            Toast.makeText(MainActivity.this, "Elaborazione completata!", Toast.LENGTH_SHORT).show();
-
+                            else
+                                Toast.makeText(MainActivity.this, "Errore, spostamento non riuscito!", Toast.LENGTH_SHORT).show();
                         });
                     });
 
@@ -255,75 +236,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-    }
-
-    private void performScan() {
-        // Esegui la scansione e salva le directory in un vettore di Uri
-        directoryUriList = scanDirectories();
-    }
-
-    private void elaboraScansione() {
-
-        // Elabora con i risultati della scansione delle directory
-        for (Uri uri : directoryUriList) {
-
-            String srcdirtemp = uri.getPath();
-            final String srcdirr;
-            String srcdir ="";
-            int colonIndex = srcdirtemp.indexOf(':');
-
-            srcdirr = srcdirtemp.substring(colonIndex + 1);
-
-            runOnUiThread(() -> {Toast.makeText(MainActivity.this, srcdirr, Toast.LENGTH_SHORT).show();});
-
-            srcdir = "/sdcard/" + srcdirr;
-
-            copyDirectoryTotale(new File(srcdir), new File("/sdcard/DCIM/SYNC"));
-        }
-
-        }
-
-    public ArrayList<Uri> scanDirectories() {
-
-        // Get the root directory of external storage
-        File externalStorageDir = Environment.getExternalStorageDirectory();
-
-        // Scan the root directory for files with supported extensions
-        scanDirectoryForExtensions(externalStorageDir, directoryUriList);
-
-        return directoryUriList;
-    }
-
-    private void scanDirectoryForExtensions(File directory, ArrayList<Uri> directoryUriList) {
-        File[] files = directory.listFiles();
-
-        if (files != null) {
-            for (File file : files) {
-                if (file.isDirectory()) {
-                    // Recursively scan subdirectories
-                    scanDirectoryForExtensions(file, directoryUriList);
-                } else {
-                    // Check if the file has a supported extension
-                    if (hasSupportedExtension(file.getAbsolutePath())) {
-                        // Create the directory Uri from the parent path
-                        Uri directoryUri = Uri.fromFile(file.getParentFile());
-
-                        if (!directoryUriList.contains(directoryUri)) {
-                            directoryUriList.add(directoryUri);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private boolean hasSupportedExtension(String filePath) {
-        for (String extension : SUPPORTED_EXTENSIONS) {
-            if (filePath.toLowerCase().endsWith(extension)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private void executeInBackground(Runnable task) {
@@ -409,6 +321,29 @@ public class MainActivity extends AppCompatActivity {
         directoryLauncher.launch(intent);
     }
 
+    private boolean copyPhotos() {
+        boolean success = true;
+
+        copyDirectory(new File("/sdcard/DCIM/FOTO-BELLE"), new File("/sdcard/DCIM/SYNC"));
+        copyDirectory(new File("/sdcard/Pictures/Gallery/owner/Da stampare"), new File("/sdcard/DCIM/SYNC"));
+        copyDirectory(new File("/sdcard/DCIM/Camera"), new File("/sdcard/DCIM/SYNC"));
+        copyDirectory(new File("/sdcard/DCIM/Creative"), new File("/sdcard/DCIM/SYNC"));
+        copyDirectory(new File("/sdcard/DCIM/Screenshots"), new File("/sdcard/DCIM/SYNC"));
+        copyDirectory(new File("/sdcard/DCIM/TikTok"), new File("/sdcard/DCIM/SYNC"));
+        copyDirectory(new File("/sdcard/Instagram"), new File("/sdcard/DCIM/SYNC"));
+        copyDirectory(new File("/sdcard/Movies/TikTok"), new File("/sdcard/DCIM/SYNC"));
+        copyDirectory(new File("/sdcard/Movies/Telegram"), new File("/sdcard/DCIM/SYNC"));
+        copyDirectory(new File("/sdcard/Movies/Whatsapp"), new File("/sdcard/DCIM/SYNC"));
+        copyDirectory(new File("/sdcard/Movies/Instagram"), new File("/sdcard/DCIM/SYNC"));
+        copyDirectory(new File("/sdcard/Pictures/Instagram"), new File("/sdcard/DCIM/SYNC"));
+        copyDirectory(new File("/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images"), new File("/sdcard/DCIM/SYNC"));
+        copyDirectory(new File("/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent"), new File("/sdcard/DCIM/SYNC"));
+        copyDirectory(new File("/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video"), new File("/sdcard/DCIM/SYNC"));
+        copyDirectory(new File("/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video/Sent"), new File("/sdcard/DCIM/SYNC"));
+
+        return success;
+    }
+
     private boolean Copy() {
         boolean success = true;
         String srcdirtemp = directoryUri.getPath();
@@ -480,56 +415,28 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private boolean copyDirectoryTotale(File srcDir, File dstDir) {
+    private boolean movePhotos() {
 
-        Files=0;
+        boolean success = true;
 
-        // Mostra la notifica all'inizio del processo di copia
-        showProgressNotification("Copia in corso...", 0, true,NotificationId);
+        moveDirectory(new File("/sdcard/DCIM/FOTO-BELLE"), new File("/sdcard/DCIM/SYNC"));
+        moveDirectory(new File("/sdcard/Pictures/Gallery/owner/Da stampare"), new File("/sdcard/DCIM/SYNC"));
+        moveDirectory(new File("/sdcard/DCIM/Camera"), new File("/sdcard/DCIM/SYNC"));
+        moveDirectory(new File("/sdcard/DCIM/Creative"), new File("/sdcard/DCIM/SYNC"));
+        moveDirectory(new File("/sdcard/DCIM/Screenshots"), new File("/sdcard/DCIM/SYNC"));
+        moveDirectory(new File("/sdcard/DCIM/TikTok"), new File("/sdcard/DCIM/SYNC"));
+        moveDirectory(new File("/sdcard/Instagram"), new File("/sdcard/DCIM/SYNC"));
+        moveDirectory(new File("/sdcard/Movies/TikTok"), new File("/sdcard/DCIM/SYNC"));
+        moveDirectory(new File("/sdcard/Movies/Telegram"), new File("/sdcard/DCIM/SYNC"));
+        moveDirectory(new File("/sdcard/Movies/Whatsapp"), new File("/sdcard/DCIM/SYNC"));
+        moveDirectory(new File("/sdcard/Movies/Instagram"), new File("/sdcard/DCIM/SYNC"));
+        moveDirectory(new File("/sdcard/Pictures/Instagram"), new File("/sdcard/DCIM/SYNC"));
+        moveDirectory(new File("/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images"), new File("/sdcard/DCIM/SYNC"));
+        moveDirectory(new File("/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent"), new File("/sdcard/DCIM/SYNC"));
+        moveDirectory(new File("/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video"), new File("/sdcard/DCIM/SYNC"));
+        moveDirectory(new File("/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video/Sent"), new File("/sdcard/DCIM/SYNC"));
 
-        try {
-            int totalFiles = 0;
-            for (File srcFile : srcDir.listFiles()) {
-                if (srcFile.isFile() && (srcFile.getName().endsWith(".jpg") || srcFile.getName().endsWith(".jpeg") || srcFile.getName().endsWith(".mp4") || srcFile.getName().endsWith(".webp") || srcFile.getName().endsWith(".png")))
-                    totalFiles++;
-            }
-
-            Files=totalFiles+Files;
-
-            int copiedFiles = 0;
-            for (File srcFile : srcDir.listFiles()) {
-                if (srcFile.isFile() && (srcFile.getName().endsWith(".jpg") || srcFile.getName().endsWith(".jpeg") || srcFile.getName().endsWith(".mp4") || srcFile.getName().endsWith(".webp") || srcFile.getName().endsWith(".png"))) {
-                    File dstFile = new File(dstDir, srcFile.getName());
-                    InputStream in = new FileInputStream(srcFile);
-                    OutputStream out = new FileOutputStream(dstFile);
-                    byte[] buf = new byte[1024];
-                    int len;
-                    while ((len = in.read(buf)) > 0) {
-                        out.write(buf, 0, len);
-                    }
-                    in.close();
-                    out.close();
-                    copiedFiles++;
-
-                    // Calcola lo stato del processo e aggiorna la notifica con lo stato
-                    int progress = (copiedFiles * 100) / totalFiles;
-                    showProgressNotification("Copia in corso...", progress, true,NotificationId);
-                }
-            }
-
-            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
-            notificationManager.cancel(NotificationId);
-
-
-            // Mostra la notifica di completamento
-            showProgressNotification("Copia eseguita con successo!", -1, false,NotificationId2);
-
-            return true;
-        } catch (Exception e) {
-            e.printStackTrace();
-            showProgressNotification("Copia fallita!", -1, false,NotificationId2);
-            return false;
-        }
+        return success;
     }
 
     private boolean Move() {

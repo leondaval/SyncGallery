@@ -36,14 +36,14 @@
         android:layout_marginBottom="20dp"/>
 
     <Button
-        android:id="@+id/scanButton"
+        android:id="@+id/copyDirectoryPersonalButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Scansione delle directory"
         android:layout_marginBottom="20dp"/>
 
     <Button
-        android:id="@+id/elaboraScansioneButton"
+        android:id="@+id/moveDirectoryPersonalButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Elabora il risultato della scansione delle directory"/>
