@@ -189,6 +189,8 @@ public class MainActivity extends AppCompatActivity {
 
                             runOnUiThread(() -> {
 
+                                progressDialog.dismiss(); // Chiudi l'AlertDialog
+
                                 if (success){
                                     Toast.makeText(MainActivity.this, "Copia eseguita con successo!", Toast.LENGTH_SHORT).show();
                                     showProgressNotification("File totali copiati: "+Files, -1, false,NotificationId3);}
@@ -220,7 +222,11 @@ public class MainActivity extends AppCompatActivity {
                     executeInBackground(() -> {
 
                         boolean success = movePhotos();
+
                         runOnUiThread(() -> {
+
+                            progressDialog.dismiss(); // Chiudi l'AlertDialog
+
                             if (success){
                                 Toast.makeText(MainActivity.this, "Spostamento eseguito con successo!", Toast.LENGTH_SHORT).show();
                                 showProgressNotification("File totali spostati: "+Files, -1, false,NotificationId3);}
