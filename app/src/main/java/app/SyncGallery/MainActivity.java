@@ -83,7 +83,9 @@ public class MainActivity extends AppCompatActivity {
                         progressDialog.show();
 
                         executeInBackground(() -> {
+
                             boolean success = Copy();
+
                             runOnUiThread(() -> {
 
                                 progressDialog.dismiss(); // Chiudi l'AlertDialog
@@ -120,7 +122,9 @@ public class MainActivity extends AppCompatActivity {
                         progressDialog.show();
 
                         executeInBackground(() -> {
+
                             boolean success = Move();
+
                             runOnUiThread(() -> {
 
                                 progressDialog.dismiss(); // Chiudi l'AlertDialog
@@ -133,8 +137,10 @@ public class MainActivity extends AppCompatActivity {
                                     Toast.makeText(MainActivity.this, "Errore, spostamento non riuscito!", Toast.LENGTH_SHORT).show();
                             });
                         });
+
                     } else
                         openDirectory();
+
                 } else
                     requestPermission();
 
@@ -146,8 +152,10 @@ public class MainActivity extends AppCompatActivity {
         changeDirectoryButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 if (checkPermission())
                     openDirectory();
+
                  else
                     requestPermission();
             }
@@ -158,11 +166,15 @@ public class MainActivity extends AppCompatActivity {
         syncDirectoryButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 if (checkPermission() && checkPermissionInternet())
                     showSmbCredentialsDialog();
+
                  else {
+
                     if (!checkPermission())
                         requestPermission();
+
                     else
                         requestPermissionInternet();
                 }
@@ -194,6 +206,7 @@ public class MainActivity extends AppCompatActivity {
                                 if (success){
                                     Toast.makeText(MainActivity.this, "Copia eseguita con successo!", Toast.LENGTH_SHORT).show();
                                     showProgressNotification("File totali copiati: "+Files, -1, false,NotificationId3);}
+
                                 else
                                     Toast.makeText(MainActivity.this, "Errore, copia non riuscita!", Toast.LENGTH_SHORT).show();
                             });
@@ -277,17 +290,19 @@ public class MainActivity extends AppCompatActivity {
             boolean allPermissionsGranted = true;
 
             for (int grantResult : grantResults) {
+
                 if (grantResult != PackageManager.PERMISSION_GRANTED) {
                     allPermissionsGranted = false;
                     break;
                 }
+
             }
 
             if (allPermissionsGranted)
                 Toast.makeText(MainActivity.this, "Puoi utilizzare la rete!", Toast.LENGTH_SHORT).show();
+
              else
                 Toast.makeText(MainActivity.this, "Permesso di utilizzo rete negato!", Toast.LENGTH_SHORT).show();
-
         }
     }
 
@@ -308,8 +323,10 @@ public class MainActivity extends AppCompatActivity {
     private ActivityResultLauncher<Intent> directoryLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
+
                 if (result.getResultCode() == Activity.RESULT_OK) {
                     Intent data = result.getData();
+
                     if (data != null) {
                         directoryUri = data.getData();
                         String srcdirtemp = directoryUri.getPath();
@@ -328,6 +345,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private boolean copyPhotos() {
+
         boolean success = true;
 
         copyDirectory(new File("/sdcard/DCIM/FOTO-BELLE"), new File("/sdcard/DCIM/SYNC"));
