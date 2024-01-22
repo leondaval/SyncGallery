@@ -255,6 +255,27 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        Button syncDirectoryPersonalButton = findViewById(R.id.syncDirectoryPersonalButton);
+        syncDirectoryPersonalButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                if (checkPermission() && checkPermissionInternet())
+
+                    moveDirectoryToSMB(new java.io.File("/sdcard/DCIM/SYNC"), "192.168.1.17", "BACKUP", "marcoperrotta", "b97c58ykr");
+
+                else {
+
+                    if (!checkPermission())
+                        requestPermission();
+
+                    else
+                        requestPermissionInternet();
+                }
+
+            }
+        });
+
     }
 
     private void executeInBackground(Runnable task) {
