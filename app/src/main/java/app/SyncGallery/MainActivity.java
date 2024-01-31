@@ -289,14 +289,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void PermessoNotifiche() {
-        NotificationManager notificationManager = getSystemService(NotificationManager.class);
-
-        if (!notificationManager.areNotificationsEnabled()) {
-            Intent intent = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                    .putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName());
-            startActivity(intent);
-        }
-
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_NOTIFICATION_POLICY, Manifest.permission.POST_NOTIFICATIONS}, PERMISSION_REQUEST_CODE);
     }
 
     private void requestPermissionInternet() {
