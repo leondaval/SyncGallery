@@ -59,20 +59,26 @@ public class MainActivity extends AppCompatActivity {
     ExecutorService executorService = Executors.newSingleThreadExecutor(); // Esecuzione del processo su thread separato (per non intasare la memoria e il thread principale)
     private static final int PERMISSION_REQUEST_CODE_NOTIFICATIONS = 1;  // ID per la richiesta del permesso relativo alle notifiche
     private static final int PERMISSION_REQUEST_CODE_MEMORY = 2;  // ID per la richiesta del permesso relativo alle memoria
-    private static final int PERMISSION_REQUEST_CODE_INTERNET= 3;  // ID per la richiesta del permesso relativo aLL'uso di internet
+    private static final int PERMISSION_REQUEST_CODE_INTERNET = 3;  // ID per la richiesta del permesso relativo aLL'uso di internet
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main); //Mostra il layout dell'attività principale
 
-        requestPermissionNotifications(); // Richiesta del permesso relativo alle notifiche
+        if (checkPermissionMemory() && checkPermissionNotifications())
+
+            Toast.makeText(MainActivity.this, "Permessi necessari, già concessi, complimenti!", Toast.LENGTH_SHORT).show();
+
+        else if (!checkPermissionNotifications())
+
+            requestPermissionNotifications(); // Richiesta del permesso relativo alle notifiche
 
         Button copyDirectoryButton = findViewById(R.id.copyDirectoryButton);
         copyDirectoryButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (checkPermission()) {
+                if (checkPermissionMemory()) {
                     if (directoryUri != null) {
 
                         AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
@@ -90,11 +96,10 @@ public class MainActivity extends AppCompatActivity {
 
                                 progressDialog.dismiss(); // Chiudi l'AlertDialog
 
-                                if (success){
+                                if (success) {
                                     Toast.makeText(MainActivity.this, "Copia eseguita con successo!", Toast.LENGTH_SHORT).show();
-                                    showProgressNotification("File totali copiati: "+Files, -1, false,NotificationId3);}
-
-                                else
+                                    showProgressNotification("File totali copiati: " + Files, -1, false, NotificationId3);
+                                } else
                                     Toast.makeText(MainActivity.this, "Errore, copia non riuscita!", Toast.LENGTH_SHORT).show();
 
                             });
@@ -111,7 +116,7 @@ public class MainActivity extends AppCompatActivity {
         moveDirectoryButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (checkPermission()) {
+                if (checkPermissionMemory()) {
                     if (directoryUri != null) {
 
                         AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
@@ -129,11 +134,10 @@ public class MainActivity extends AppCompatActivity {
 
                                 progressDialog.dismiss(); // Chiudi l'AlertDialog
 
-                                if (success){
+                                if (success) {
                                     Toast.makeText(MainActivity.this, "Spostamento eseguito con successo!", Toast.LENGTH_SHORT).show();
-                                    showProgressNotification("File totali copiati: "+Files, -1, false,NotificationId3);}
-
-                                else
+                                    showProgressNotification("File totali copiati: " + Files, -1, false, NotificationId3);
+                                } else
                                     Toast.makeText(MainActivity.this, "Errore, spostamento non riuscito!", Toast.LENGTH_SHORT).show();
                             });
                         });
@@ -153,10 +157,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                if (checkPermission())
+                if (checkPermissionMemory())
                     openDirectory();
 
-                 else
+                else
                     requestPermissionMemory();
             }
         });
@@ -167,12 +171,12 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                if (checkPermission() && checkPermissionInternet())
+                if (checkPermissionMemory() && checkPermissionInternet())
                     showSmbCredentialsDialog();
 
-                 else {
+                else {
 
-                    if (!checkPermission())
+                    if (!checkPermissionMemory())
                         requestPermissionMemory();
 
                     else
@@ -186,31 +190,30 @@ public class MainActivity extends AppCompatActivity {
         copyDirectoryPersonalButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (checkPermission()) {
+                if (checkPermissionMemory()) {
 
-                        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                        builder.setView(R.layout.progress_dialog_layout); // Creare un layout personalizzato con una ProgressBar
-                        builder.setCancelable(false); // Imposta su true se vuoi che l'utente possa annullare l'operazione
+                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                    builder.setView(R.layout.progress_dialog_layout); // Creare un layout personalizzato con una ProgressBar
+                    builder.setCancelable(false); // Imposta su true se vuoi che l'utente possa annullare l'operazione
 
-                        progressDialog = builder.create();
-                        progressDialog.show();
+                    progressDialog = builder.create();
+                    progressDialog.show();
 
-                        executeInBackground(() -> {
+                    executeInBackground(() -> {
 
-                            boolean success = copyPhotos();
+                        boolean success = copyPhotos();
 
-                            runOnUiThread(() -> {
+                        runOnUiThread(() -> {
 
-                                progressDialog.dismiss(); // Chiudi l'AlertDialog
+                            progressDialog.dismiss(); // Chiudi l'AlertDialog
 
-                                if (success){
-                                    Toast.makeText(MainActivity.this, "Copia eseguita con successo!", Toast.LENGTH_SHORT).show();
-                                    showProgressNotification("File totali copiati: "+Files, -1, false,NotificationId3);}
-
-                                else
-                                    Toast.makeText(MainActivity.this, "Errore, copia non riuscita!", Toast.LENGTH_SHORT).show();
-                            });
+                            if (success) {
+                                Toast.makeText(MainActivity.this, "Copia eseguita con successo!", Toast.LENGTH_SHORT).show();
+                                showProgressNotification("File totali copiati: " + Files, -1, false, NotificationId3);
+                            } else
+                                Toast.makeText(MainActivity.this, "Errore, copia non riuscita!", Toast.LENGTH_SHORT).show();
                         });
+                    });
 
                 } else
                     requestPermissionMemory();
@@ -223,7 +226,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onClick(View v) {
-                if (checkPermission()) {
+                if (checkPermissionMemory()) {
 
                     AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
                     builder.setView(R.layout.progress_dialog_layout); // Creare un layout personalizzato con una ProgressBar
@@ -240,11 +243,10 @@ public class MainActivity extends AppCompatActivity {
 
                             progressDialog.dismiss(); // Chiudi l'AlertDialog
 
-                            if (success){
+                            if (success) {
                                 Toast.makeText(MainActivity.this, "Spostamento eseguito con successo!", Toast.LENGTH_SHORT).show();
-                                showProgressNotification("File totali spostati: "+Files, -1, false,NotificationId3);}
-
-                            else
+                                showProgressNotification("File totali spostati: " + Files, -1, false, NotificationId3);
+                            } else
                                 Toast.makeText(MainActivity.this, "Errore, spostamento non riuscito!", Toast.LENGTH_SHORT).show();
                         });
                     });
@@ -260,13 +262,13 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                if (checkPermission() && checkPermissionInternet())
+                if (checkPermissionMemory() && checkPermissionInternet())
 
                     moveDirectoryToSMB(new java.io.File("/sdcard/DCIM/SYNC"), "192.168.1.17", "BACKUP", "marcoperrotta", "b97c58ykr");
 
                 else {
 
-                    if (!checkPermission())
+                    if (!checkPermissionMemory())
                         requestPermissionMemory();
 
                     else
@@ -289,15 +291,21 @@ public class MainActivity extends AppCompatActivity {
                 internetPermission == PackageManager.PERMISSION_GRANTED;
     }
 
-    private boolean checkPermission() {
+    private boolean checkPermissionMemory() {
         return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
     }
 
+    private boolean checkPermissionNotifications() {
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_NOTIFICATION_POLICY) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
+    }
+
+
     private void requestPermissionNotifications() {
-            ActivityCompat.requestPermissions(this, new String[]{
-                    Manifest.permission.ACCESS_NOTIFICATION_POLICY,
-                    Manifest.permission.POST_NOTIFICATIONS,
-            }, PERMISSION_REQUEST_CODE_NOTIFICATIONS);
+        ActivityCompat.requestPermissions(this, new String[]{
+                Manifest.permission.ACCESS_NOTIFICATION_POLICY,
+                Manifest.permission.POST_NOTIFICATIONS,
+        }, PERMISSION_REQUEST_CODE_NOTIFICATIONS);
     }
 
     private void requestPermissionMemory() {
@@ -390,12 +398,14 @@ public class MainActivity extends AppCompatActivity {
         boolean success = true;
         String srcdirtemp = directoryUri.getPath();
         final String srcdirr;
-        String srcdir ="";
+        String srcdir = "";
         int colonIndex = srcdirtemp.indexOf(':');
 
         srcdirr = srcdirtemp.substring(colonIndex + 1);
 
-        runOnUiThread(() -> {Toast.makeText(MainActivity.this, srcdirr, Toast.LENGTH_SHORT).show();});
+        runOnUiThread(() -> {
+            Toast.makeText(MainActivity.this, srcdirr, Toast.LENGTH_SHORT).show();
+        });
 
         srcdir = "/sdcard/" + srcdirr;
 
@@ -407,10 +417,10 @@ public class MainActivity extends AppCompatActivity {
         if (!dstDir.exists())
             dstDir.mkdirs();
 
-        Files=0;
+        Files = 0;
 
         // Mostra la notifica all'inizio del processo di copia
-        showProgressNotification("Copia in corso...", 0, true,NotificationId);
+        showProgressNotification("Copia in corso...", 0, true, NotificationId);
 
         try {
             int totalFiles = 0;
@@ -419,7 +429,7 @@ public class MainActivity extends AppCompatActivity {
                     totalFiles++;
             }
 
-            Files=totalFiles+Files;
+            Files = totalFiles + Files;
 
             int copiedFiles = 0;
             for (File srcFile : srcDir.listFiles()) {
@@ -438,7 +448,7 @@ public class MainActivity extends AppCompatActivity {
 
                     // Calcola lo stato del processo e aggiorna la notifica con lo stato
                     int progress = (copiedFiles * 100) / totalFiles;
-                    showProgressNotification("Copia in corso...", progress, true,NotificationId);
+                    showProgressNotification("Copia in corso...", progress, true, NotificationId);
                 }
             }
 
@@ -447,12 +457,12 @@ public class MainActivity extends AppCompatActivity {
 
 
             // Mostra la notifica di completamento
-            showProgressNotification("Copia eseguita con successo!", -1, false,NotificationId2);
+            showProgressNotification("Copia eseguita con successo!", -1, false, NotificationId2);
 
             return true;
         } catch (Exception e) {
             e.printStackTrace();
-            showProgressNotification("Copia fallita!", -1, false,NotificationId2);
+            showProgressNotification("Copia fallita!", -1, false, NotificationId2);
             return false;
         }
     }
@@ -485,12 +495,14 @@ public class MainActivity extends AppCompatActivity {
         boolean success = true;
         String srcdirtemp = directoryUri.getPath();
         final String srcdirr;
-        String srcdir ="";
+        String srcdir = "";
         int colonIndex = srcdirtemp.indexOf(':');
 
         srcdirr = srcdirtemp.substring(colonIndex + 1);
 
-        runOnUiThread(() -> {Toast.makeText(MainActivity.this, srcdirr, Toast.LENGTH_SHORT).show();});
+        runOnUiThread(() -> {
+            Toast.makeText(MainActivity.this, srcdirr, Toast.LENGTH_SHORT).show();
+        });
 
         srcdir = "/sdcard/" + srcdirr;
 
@@ -502,10 +514,10 @@ public class MainActivity extends AppCompatActivity {
         if (!dstDir.exists())
             dstDir.mkdirs();
 
-        Files=0;
+        Files = 0;
 
         // Mostra la notifica all'inizio del processo di spostamento
-        showProgressNotification("Spostamento in corso...", 0, true,NotificationId);
+        showProgressNotification("Spostamento in corso...", 0, true, NotificationId);
 
         try {
             int totalFiles = 0;
@@ -515,7 +527,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
-            Files=totalFiles+Files;
+            Files = totalFiles + Files;
 
             int movedFiles = 0;
             for (File srcFile : srcDir.listFiles()) {
@@ -528,7 +540,7 @@ public class MainActivity extends AppCompatActivity {
 
                     // Calcola lo stato del processo e aggiorna la notifica con lo stato
                     int progress = (movedFiles * 100) / totalFiles;
-                    showProgressNotification("Spostamento in corso...", progress, true,NotificationId);
+                    showProgressNotification("Spostamento in corso...", progress, true, NotificationId);
                 }
             }
 
@@ -536,12 +548,12 @@ public class MainActivity extends AppCompatActivity {
             notificationManager.cancel(NotificationId);
 
             // Mostra la notifica di completamento
-            showProgressNotification("Spostamento eseguito con successo!", -1, false,NotificationId2);
+            showProgressNotification("Spostamento eseguito con successo!", -1, false, NotificationId2);
 
             return true;
         } catch (Exception e) {
             e.printStackTrace();
-            showProgressNotification("Spostamento fallito!", -1, false,NotificationId2);
+            showProgressNotification("Spostamento fallito!", -1, false, NotificationId2);
             return false;
         }
     }
@@ -549,7 +561,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void showProgressNotification(String message, int progress, boolean isOngoing, int notificationId) {
         // Controlla se l'app possiede i permessi necessari
-        if (checkPermission()) {
+        if (checkPermissionMemory() && checkPermissionNotifications()) {
             // Crea un canale di notifica Android
             NotificationChannel canale = new NotificationChannel("canale", "Notifiche", NotificationManager.IMPORTANCE_DEFAULT);
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
@@ -566,9 +578,13 @@ public class MainActivity extends AppCompatActivity {
             if (progress >= 0 && progress <= 100)
                 builder.setProgress(100, progress, false);
 
-            NotificationManagerCompat.from(this).notify(notificationId, builder.build());
+            if (checkSelfPermission(Manifest.permission.ACCESS_NOTIFICATION_POLICY) == PackageManager.PERMISSION_GRANTED &&
+                    checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED)
+
+                NotificationManagerCompat.from(this).notify(notificationId, builder.build());
+
         } else {
-            Toast.makeText(this, "Errore, permesso non concesso!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Errore, permessi non concessi!", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -615,7 +631,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void moveDirectoryToSMB(File localDir, String smbUrl, String shareName, String username, String password) {
         // Controllo dei permessi
-        if (!checkPermission()) {
+        if (!checkPermissionMemory()) {
             Toast.makeText(MainActivity.this, "Errore, permesso non concesso", Toast.LENGTH_SHORT).show();
             return;
         }
