@@ -64,9 +64,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main); //Mostra il layout dell'attività principale
+        setContentView(R.layout.activity_main); // Mostra il layout dell'attività principale
 
-        if (checkPermissionMemory() && checkPermissionNotifications())
+        if (checkPermissionMemory() && checkPermissionNotifications()) // Verifica se i permessi sono già stati concessi durante un esecuzione dell'app in passato
 
             Toast.makeText(MainActivity.this, "Permessi necessari, già concessi, complimenti!", Toast.LENGTH_SHORT).show();
 
@@ -273,8 +273,8 @@ public class MainActivity extends AppCompatActivity {
 
                     else
                         requestPermissionInternet();
-                }
 
+                }
             }
         });
 
