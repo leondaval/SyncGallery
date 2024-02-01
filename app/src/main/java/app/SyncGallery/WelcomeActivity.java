@@ -27,8 +27,8 @@ public class WelcomeActivity extends AppCompatActivity {
                 editor.putBoolean("firstStart", false);
                 editor.apply();
 
-                // Passa alla MainActivity
-                startActivity(new Intent(WelcomeActivity.this, MainActivity.class));
+                // Passa alla AlertActivity
+                startActivity(new Intent(WelcomeActivity.this, AlertActivity.class));
                 finish();
             }
         });

@@ -10,7 +10,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -50,22 +49,24 @@ import com.hierynomus.smbj.share.DiskShare;
 
 public class MainActivity extends AppCompatActivity {
 
-    private int NotificationId = 1; // ID per la notifica del progesso
-    private int NotificationId2 = 2; // ID per la notifica del completamento
-    private int NotificationId3 = 3; // ID per la notifica del numero di file
-    private int Files = 0; //Contatore numero foto/video
-    private Uri directoryUri;
-    private ArrayList<Uri> directoryUriList;
-    private AlertDialog progressDialog;
-    ExecutorService executorService = Executors.newSingleThreadExecutor();
-    private static final int PERMISSION_REQUEST_CODE = 1;
+    private final int NotificationId = 1; // ID per la notifica sullo stato di avanzamento del processo inziato
+    private final int NotificationId2 = 2; // ID per la notifica del completamento
+    private final int NotificationId3 = 3; // ID per la notifica del numero di file copiati/spostati
+    private int Files = 0; // Contatore numero totale foto/video estrapolati dalla directory selezionata
+    private Uri directoryUri; // Directory selezionata dall'utente
+    private ArrayList<Uri> directoryUriList; // Da utilizzare (forse) in futuro per implementare una selezione multipla di directory da parte dell'utente
+    private AlertDialog progressDialog; // Popup a schermo che mostra lo il caricamento del processo corrente
+    ExecutorService executorService = Executors.newSingleThreadExecutor(); // Esecuzione del processo su thread separato (per non intasare la memoria e il thread principale)
+    private static final int PERMISSION_REQUEST_CODE_NOTIFICATIONS = 1;  // ID per la richiesta del permesso relativo alle notifiche
+    private static final int PERMISSION_REQUEST_CODE_MEMORY = 2;  // ID per la richiesta del permesso relativo alle memoria
+    private static final int PERMISSION_REQUEST_CODE_INTERNET= 3;  // ID per la richiesta del permesso relativo aLL'uso di internet
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_main); //Mostra il layout dell'attività principale
 
-        PermessoNotifiche();
+        requestPermissionNotifications(); // Richiesta del permesso relativo alle notifiche
 
         Button copyDirectoryButton = findViewById(R.id.copyDirectoryButton);
         copyDirectoryButton.setOnClickListener(new View.OnClickListener() {
@@ -101,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
                     } else
                         openDirectory();
                 } else
-                    requestPermission();
+                    requestPermissionMemory();
 
             }
         });
@@ -141,7 +142,7 @@ public class MainActivity extends AppCompatActivity {
                         openDirectory();
 
                 } else
-                    requestPermission();
+                    requestPermissionMemory();
 
             }
         });
@@ -156,7 +157,7 @@ public class MainActivity extends AppCompatActivity {
                     openDirectory();
 
                  else
-                    requestPermission();
+                    requestPermissionMemory();
             }
         });
 
@@ -172,7 +173,7 @@ public class MainActivity extends AppCompatActivity {
                  else {
 
                     if (!checkPermission())
-                        requestPermission();
+                        requestPermissionMemory();
 
                     else
                         requestPermissionInternet();
@@ -212,7 +213,7 @@ public class MainActivity extends AppCompatActivity {
                         });
 
                 } else
-                    requestPermission();
+                    requestPermissionMemory();
 
             }
         });
@@ -249,7 +250,7 @@ public class MainActivity extends AppCompatActivity {
                     });
 
                 } else
-                    requestPermission();
+                    requestPermissionMemory();
 
             }
         });
@@ -266,7 +267,7 @@ public class MainActivity extends AppCompatActivity {
                 else {
 
                     if (!checkPermission())
-                        requestPermission();
+                        requestPermissionMemory();
 
                     else
                         requestPermissionInternet();
@@ -288,20 +289,25 @@ public class MainActivity extends AppCompatActivity {
                 internetPermission == PackageManager.PERMISSION_GRANTED;
     }
 
-    private void PermessoNotifiche() {
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_NOTIFICATION_POLICY, Manifest.permission.POST_NOTIFICATIONS}, PERMISSION_REQUEST_CODE);
-    }
-
-    private void requestPermissionInternet() {
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_NETWORK_STATE, Manifest.permission.INTERNET}, PERMISSION_REQUEST_CODE);
-    }
-
     private boolean checkPermission() {
         return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
     }
 
-    private void requestPermission() {
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_REQUEST_CODE);
+    private void requestPermissionNotifications() {
+            ActivityCompat.requestPermissions(this, new String[]{
+                    Manifest.permission.ACCESS_NOTIFICATION_POLICY,
+                    Manifest.permission.POST_NOTIFICATIONS,
+            }, PERMISSION_REQUEST_CODE_NOTIFICATIONS);
+    }
+
+    private void requestPermissionMemory() {
+        ActivityCompat.requestPermissions(this, new String[]{
+                Manifest.permission.READ_EXTERNAL_STORAGE
+        }, PERMISSION_REQUEST_CODE_MEMORY);
+    }
+
+    private void requestPermissionInternet() {
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_NETWORK_STATE, Manifest.permission.INTERNET}, PERMISSION_REQUEST_CODE_INTERNET);
     }
 
     private ActivityResultLauncher<Intent> directoryLauncher = registerForActivityResult(
@@ -327,14 +333,27 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
-        if (requestCode == PERMISSION_REQUEST_CODE) {
+        switch (requestCode) {
+            case PERMISSION_REQUEST_CODE_NOTIFICATIONS:
+                // Gestisci la risposta per i permessi delle notifiche
+                if (grantResults.length > 0 &&
+                        grantResults[0] == PackageManager.PERMISSION_GRANTED &&
+                        grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(MainActivity.this, "Grazie, permesso notifiche concesso!", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(MainActivity.this, "Attenzione, permesso notifiche negato!", Toast.LENGTH_SHORT).show();
+                }
+                break;
 
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
-                Toast.makeText(this, "Permesso concesso,grazie!", Toast.LENGTH_SHORT).show();
-
-             else
-                // Permesso negato, gestisci di conseguenza
-                Toast.makeText(this, "Permesso negato, l'app potrebbe non funzionare correttamente.", Toast.LENGTH_SHORT).show();
+            case PERMISSION_REQUEST_CODE_MEMORY:
+                // Gestisci la risposta per i permessi della memoria
+                if (grantResults.length > 0 &&
+                        grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(MainActivity.this, "Grazie, permesso memoria concesso!", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(MainActivity.this, "Attenzione, permesso memoria negato!", Toast.LENGTH_SHORT).show();
+                }
+                break;
         }
     }
 
