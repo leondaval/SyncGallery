@@ -77,8 +77,6 @@ public class MainActivity extends AppCompatActivity {
 
             requestPermissionNotifications(); // Richiesta del permesso relativo alle notifiche
 
-
-
         Button copyDirectoryButton = findViewById(R.id.copyDirectoryButton);
         copyDirectoryButton.setOnClickListener(new View.OnClickListener() {
             @Override
