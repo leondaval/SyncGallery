@@ -429,7 +429,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
     private void showProgressNotification(String message, int progress, boolean isOngoing, int notificationId) {
         // Controlla se l'app possiede i permessi necessari
         if (checkPermissionMemory() && checkPermissionNotifications()) {
@@ -458,8 +457,6 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "Errore, permessi non concessi!", Toast.LENGTH_SHORT).show();
         }
     }
-
-
 
     private void showSmbCredentialsDialog() {
         String dstDirPath = "/sdcard/DCIM/SYNC";
