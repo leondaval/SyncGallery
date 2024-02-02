@@ -189,98 +189,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        Button copyDirectoryPersonalButton = findViewById(R.id.copyDirectoryPersonalButton);
-        copyDirectoryPersonalButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (checkPermissionMemory()) {
-
-                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                    builder.setView(R.layout.progress_dialog_layout); // Creare un layout personalizzato con una ProgressBar
-                    builder.setCancelable(false); // Imposta su true se vuoi che l'utente possa annullare l'operazione
-
-                    progressDialog = builder.create();
-                    progressDialog.show();
-
-                    executeInBackground(() -> {
-
-                        boolean success = copyPhotos();
-
-                        runOnUiThread(() -> {
-
-                            progressDialog.dismiss(); // Chiudi l'AlertDialog
-
-                            if (success) {
-                                Toast.makeText(MainActivity.this, "Copia eseguita con successo!", Toast.LENGTH_SHORT).show();
-                                showProgressNotification("File totali copiati: " + Files, -1, false, NotificationId3);
-                            } else
-                                Toast.makeText(MainActivity.this, "Errore, copia non riuscita!", Toast.LENGTH_SHORT).show();
-                        });
-                    });
-
-                } else
-                    requestPermissionMemory();
-
-            }
-        });
-
-        Button moveDirectoryPersonalButton = findViewById(R.id.moveDirectoryPersonalButton);
-        moveDirectoryPersonalButton.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                if (checkPermissionMemory()) {
-
-                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                    builder.setView(R.layout.progress_dialog_layout); // Creare un layout personalizzato con una ProgressBar
-                    builder.setCancelable(false); // Imposta su true se vuoi che l'utente possa annullare l'operazione
-
-                    progressDialog = builder.create();
-                    progressDialog.show();
-
-                    executeInBackground(() -> {
-
-                        boolean success = movePhotos();
-
-                        runOnUiThread(() -> {
-
-                            progressDialog.dismiss(); // Chiudi l'AlertDialog
-
-                            if (success) {
-                                Toast.makeText(MainActivity.this, "Spostamento eseguito con successo!", Toast.LENGTH_SHORT).show();
-                                showProgressNotification("File totali spostati: " + Files, -1, false, NotificationId3);
-                            } else
-                                Toast.makeText(MainActivity.this, "Errore, spostamento non riuscito!", Toast.LENGTH_SHORT).show();
-                        });
-                    });
-
-                } else
-                    requestPermissionMemory();
-
-            }
-        });
-
-        Button syncDirectoryPersonalButton = findViewById(R.id.syncDirectoryPersonalButton);
-        syncDirectoryPersonalButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                if (checkPermissionMemory() && checkPermissionInternet())
-
-                    moveDirectoryToSMB(new java.io.File("/sdcard/DCIM/SYNC"), "192.168.1.17", "BACKUP", "marcoperrotta", "b97c58ykr");
-
-                else {
-
-                    if (!checkPermissionMemory())
-                        requestPermissionMemory();
-
-                    else
-                        requestPermissionInternet();
-
-                }
-            }
-        });
-
     }
 
     private void executeInBackground(Runnable task) {
@@ -323,12 +231,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     ActivityResultLauncher<Intent> requestPermissionLauncher =
-            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
-                if (result.getResultCode() == Activity.RESULT_OK)
-                    Toast.makeText(MainActivity.this, "Permesso concesso, grazie!", Toast.LENGTH_SHORT).show();
-                 else
-                    Toast.makeText(MainActivity.this, "Permesso non concesso, l'app non funzionerà!", Toast.LENGTH_SHORT).show();
-            });
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {});
 
     private void requestPermissionInternet() {
         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_NETWORK_STATE, Manifest.permission.INTERNET}, PERMISSION_REQUEST_CODE_INTERNET);
@@ -384,30 +287,6 @@ public class MainActivity extends AppCompatActivity {
     private void openDirectory() {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
         directoryLauncher.launch(intent);
-    }
-
-    private boolean copyPhotos() {
-
-        boolean success = true;
-
-        copyDirectory(new File("/sdcard/DCIM/FOTO-BELLE"), new File("/sdcard/DCIM/SYNC"));
-        copyDirectory(new File("/sdcard/Pictures/Gallery/owner/Da stampare"), new File("/sdcard/DCIM/SYNC"));
-        copyDirectory(new File("/sdcard/DCIM/Camera"), new File("/sdcard/DCIM/SYNC"));
-        copyDirectory(new File("/sdcard/DCIM/Creative"), new File("/sdcard/DCIM/SYNC"));
-        copyDirectory(new File("/sdcard/DCIM/Screenshots"), new File("/sdcard/DCIM/SYNC"));
-        copyDirectory(new File("/sdcard/DCIM/TikTok"), new File("/sdcard/DCIM/SYNC"));
-        copyDirectory(new File("/sdcard/Instagram"), new File("/sdcard/DCIM/SYNC"));
-        copyDirectory(new File("/sdcard/Movies/TikTok"), new File("/sdcard/DCIM/SYNC"));
-        copyDirectory(new File("/sdcard/Movies/Telegram"), new File("/sdcard/DCIM/SYNC"));
-        copyDirectory(new File("/sdcard/Movies/Whatsapp"), new File("/sdcard/DCIM/SYNC"));
-        copyDirectory(new File("/sdcard/Movies/Instagram"), new File("/sdcard/DCIM/SYNC"));
-        copyDirectory(new File("/sdcard/Pictures/Instagram"), new File("/sdcard/DCIM/SYNC"));
-        copyDirectory(new File("/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images"), new File("/sdcard/DCIM/SYNC"));
-        copyDirectory(new File("/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent"), new File("/sdcard/DCIM/SYNC"));
-        copyDirectory(new File("/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video"), new File("/sdcard/DCIM/SYNC"));
-        copyDirectory(new File("/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video/Sent"), new File("/sdcard/DCIM/SYNC"));
-
-        return success;
     }
 
     private boolean Copy() {
@@ -481,30 +360,6 @@ public class MainActivity extends AppCompatActivity {
             showProgressNotification("Copia fallita!", -1, false, NotificationId2);
             return false;
         }
-    }
-
-    private boolean movePhotos() {
-
-        boolean success = true;
-
-        moveDirectory(new File("/sdcard/DCIM/FOTO-BELLE"), new File("/sdcard/DCIM/SYNC"));
-        moveDirectory(new File("/sdcard/Pictures/Gallery/owner/Da stampare"), new File("/sdcard/DCIM/SYNC"));
-        moveDirectory(new File("/sdcard/DCIM/Camera"), new File("/sdcard/DCIM/SYNC"));
-        moveDirectory(new File("/sdcard/DCIM/Creative"), new File("/sdcard/DCIM/SYNC"));
-        moveDirectory(new File("/sdcard/DCIM/Screenshots"), new File("/sdcard/DCIM/SYNC"));
-        moveDirectory(new File("/sdcard/DCIM/TikTok"), new File("/sdcard/DCIM/SYNC"));
-        moveDirectory(new File("/sdcard/Instagram"), new File("/sdcard/DCIM/SYNC"));
-        moveDirectory(new File("/sdcard/Movies/TikTok"), new File("/sdcard/DCIM/SYNC"));
-        moveDirectory(new File("/sdcard/Movies/Telegram"), new File("/sdcard/DCIM/SYNC"));
-        moveDirectory(new File("/sdcard/Movies/Whatsapp"), new File("/sdcard/DCIM/SYNC"));
-        moveDirectory(new File("/sdcard/Movies/Instagram"), new File("/sdcard/DCIM/SYNC"));
-        moveDirectory(new File("/sdcard/Pictures/Instagram"), new File("/sdcard/DCIM/SYNC"));
-        moveDirectory(new File("/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images"), new File("/sdcard/DCIM/SYNC"));
-        moveDirectory(new File("/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent"), new File("/sdcard/DCIM/SYNC"));
-        moveDirectory(new File("/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video"), new File("/sdcard/DCIM/SYNC"));
-        moveDirectory(new File("/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video/Sent"), new File("/sdcard/DCIM/SYNC"));
-
-        return success;
     }
 
     private boolean Move() {
