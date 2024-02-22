@@ -81,6 +81,7 @@ public class MainActivity extends AppCompatActivity {
         copyDirectoryButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 if (checkPermissionMemory()) {
                     if (directoryUri != null) {
 
@@ -119,6 +120,7 @@ public class MainActivity extends AppCompatActivity {
         moveDirectoryButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 if (checkPermissionMemory()) {
                     if (directoryUri != null) {
 
@@ -142,12 +144,11 @@ public class MainActivity extends AppCompatActivity {
                                     showProgressNotification("File totali copiati: " + Files, -1, false, NotificationId3);
                                 } else
                                     Toast.makeText(MainActivity.this, "Errore, spostamento non riuscito!", Toast.LENGTH_SHORT).show();
+
                             });
                         });
-
                     } else
                         openDirectory();
-
                 } else
                     requestPermissionMemory();
 
@@ -162,7 +163,6 @@ public class MainActivity extends AppCompatActivity {
 
                 if (checkPermissionMemory())
                     openDirectory();
-
                 else
                     requestPermissionMemory();
             }
@@ -176,19 +176,14 @@ public class MainActivity extends AppCompatActivity {
 
                 if (checkPermissionMemory() && checkPermissionInternet())
                     showSmbCredentialsDialog();
-
                 else {
-
                     if (!checkPermissionMemory())
                         requestPermissionMemory();
-
                     else
                         requestPermissionInternet();
                 }
-
             }
         });
-
     }
 
     private void executeInBackground(Runnable task) {
@@ -263,23 +258,20 @@ public class MainActivity extends AppCompatActivity {
         switch (requestCode) {
             case PERMISSION_REQUEST_CODE_NOTIFICATIONS:
                 // Gestisci la risposta per i permessi delle notifiche
-                if (grantResults.length > 0 &&
-                        grantResults[0] == PackageManager.PERMISSION_GRANTED &&
-                        grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED)
                     Toast.makeText(MainActivity.this, "Grazie, permesso notifiche concesso!", Toast.LENGTH_SHORT).show();
-                } else {
+                 else
                     Toast.makeText(MainActivity.this, "Attenzione, permesso notifiche negato!", Toast.LENGTH_SHORT).show();
-                }
+
                 break;
 
             case PERMISSION_REQUEST_CODE_MEMORY:
                 // Gestisci la risposta per i permessi della memoria
-                if (grantResults.length > 0 &&
-                        grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
                     Toast.makeText(MainActivity.this, "Grazie, permesso memoria concesso!", Toast.LENGTH_SHORT).show();
-                } else {
+                 else
                     Toast.makeText(MainActivity.this, "Attenzione, permesso memoria negato!", Toast.LENGTH_SHORT).show();
-                }
+
                 break;
         }
     }
@@ -393,9 +385,8 @@ public class MainActivity extends AppCompatActivity {
         try {
             int totalFiles = 0;
             for (File srcFile : srcDir.listFiles()) {
-                if (srcFile.isFile() && (srcFile.getName().endsWith(".jpg") || srcFile.getName().endsWith(".jpeg") || srcFile.getName().endsWith(".mp4") || srcFile.getName().endsWith(".webp") || srcFile.getName().endsWith(".png"))) {
+                if (srcFile.isFile() && (srcFile.getName().endsWith(".jpg") || srcFile.getName().endsWith(".jpeg") || srcFile.getName().endsWith(".mp4") || srcFile.getName().endsWith(".webp") || srcFile.getName().endsWith(".png")))
                     totalFiles++;
-                }
             }
 
             Files = totalFiles + Files;
